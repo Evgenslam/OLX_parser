@@ -1,3 +1,6 @@
+# Правки и коменты можно вносить сюда
+
+
 from bs4 import BeautifulSoup
 import requests
 import sqlite3
