@@ -1,14 +1,15 @@
 # Правки и коменты можно вносить сюда
 
-
 from bs4 import BeautifulSoup
 import requests
 import sqlite3
-from config import bot_token, chat_id
+#from config import bot_token, chat_id
 from datetime import datetime
 import fake_useragent
 from random import randint, choice
 import time
+from decouple import config
+
 
 start_time = time.time()
 
@@ -16,7 +17,6 @@ my_headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "user-agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
 }
-
 ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
 
 '''
@@ -28,9 +28,10 @@ ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзер�
 #     'search[filter_enum_comission][0]': 'no'
 # }
 
+proxy_list = config('proxy_list')
 
-with open('spaceproxies.txt', 'r') as f:  #получаем список прокси для ротации из отдельного файла
-    proxy_list = f.read().split('\n')
+# with open('spaceproxies.txt', 'r') as f:  #получаем список прокси для ротации из отдельного файла
+#     proxy_list = f.read().split('\n')
 
 
 def format_text(offer):
@@ -44,8 +45,8 @@ def format_text(offer):
 
 def send_telegram(offer):
     text = format_text(offer)
-    url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-    data = {'chat_id': chat_id,
+    url = f"https://api.telegram.org/bot{config('bot_token')}/sendMessage"
+    data = {'chat_id': config('chat_id'),
             'text': text,
             'parse_mode': 'HTML'
     }
