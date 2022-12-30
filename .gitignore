@@ -1,5 +1,10 @@
 .env
 Notes
-realty4.db
-spaceproxies.txt
+DB/
 config.py
+__pycache__
+.mypy_cache/
+venv/
+.pylintrc
+setup.cfg
+.pytest_cache/
