@@ -1,10 +1,9 @@
 # Правки и коменты можно вносить сюда
-
 import sqlite3
 import time
 from datetime import datetime
 from random import randint
-from typing import List, Dict
+from typing import Dict, List
 
 import requests
 from bs4 import BeautifulSoup
@@ -45,10 +44,7 @@ def format_text(offer: Dict[str]) -> str:
 def send_telegram(offer: Dict[str]) -> None:
     text: str = format_text(offer)
     url: str = f"https://api.telegram.org/bot{config('bot_token')}/sendMessage"
-    data: dict = {'chat_id': config('chat_id'),
-            'text': text,
-            'parse_mode': 'HTML'
-            }
+    data: dict = dict(chat_id=config('chat_id'), text=text, parse_mode='HTML')
     response = requests.post(url=url, data=data)
     print(response)
 

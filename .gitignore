@@ -1,8 +1,9 @@
 .env
+.idea/
 Notes
 DB/
 config.py
-__pycache__
+__pycache__/
 .mypy_cache/
 venv/
 .pylintrc
