@@ -5,11 +5,11 @@ from telegram import Telegram
 from database import Database
 
 '''
-This version utilizes check_database function (includes check_db, send_telegram, send_db)
+This version utilizes classes Database and Telegram
 In the current version of the script we just copy the URL after making our query by hands directly at the site.
 In the future the parameters will be obtained via Telegram chat from the user and inserted into the script.
 '''
-tg = Telegram(bot_token=config{}, chat_id =)
+tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 
 def main():
     while True:
@@ -26,4 +26,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# TEST
