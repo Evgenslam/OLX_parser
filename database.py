@@ -1,3 +1,8 @@
+import sqlite3
+import time
+
+start_time = time.time()
+
 class Database:
 
     def __init__(self, db_path):
