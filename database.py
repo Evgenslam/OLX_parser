@@ -5,7 +5,7 @@ class Database:
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
 
-    # Here I tried to implement context mananger, but failed
+    # Here I tried to implement context manager, but failed
     # def __init__(self, db_path: str):
     #     self.db_path = open(db_path)
 
