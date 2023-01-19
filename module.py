@@ -3,7 +3,7 @@ import sqlite3
 import requests
 from random import randint
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
 from bs4 import BeautifulSoup
 
 # for using fake useragent
