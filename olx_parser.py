@@ -16,12 +16,21 @@ def main():
         db = Database(db_path='DB/realty4.db')
 
         cards: List[str] = get_cards(url=config('url'))
+        count = 0
         for card in cards:
-            if db.check_entry(card):
-                offer = get_offer(card)
-                text = format_text(offer)
-                tg.send_telegram(text)
-                db.send_to_db(offer)
+            print(cards)
+            count += 1
+        print(count)
+        print('=' * 30, f'\n{len(cards)}: {len(set(cards))}')
+        break
+                    # offer = get_offer(card)
+            # print(offer)
+
+            # if db.check_entry(card):
+            #     offer = get_offer(card)
+            #     text = format_text(offer)
+            #     tg.send_telegram(text)
+            #     db.send_to_db(offer)
 
 
 if __name__ == "__main__":
