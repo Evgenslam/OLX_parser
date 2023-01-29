@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import Dict, List
 from bs4 import BeautifulSoup
 from decouple import config
+from functools import reduce
+from operator import add
 
 # for using fake useragent
 # ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
@@ -24,6 +26,29 @@ my_headers: dict = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "user-agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
 }
+
+
+def ask_parameters() -> tuple:
+    district_targ = input('В каком районе хотели бы снять квартиру: ')  # проверка в БД
+    rooms_targ = input('Сколько комнат: ')
+    price_targ = input('Максимальная стоимость в сумах, которую вы готовы заплатить: ')
+    commision_targ = input(
+        'Готовы ли вы рассматривать варианты с комиссией (да/нет): ')  # проверка в параметрах и БД
+    area_from_targ = input('Площадь от: ')
+    area_to_targ = input('Площадь до: ')
+    return '', '', price_targ, rooms_targ, ['no', 'yes'][commision_targ == 'да'], area_from_targ, area_to_targ, '', \
+                                                                          district_targ
+
+# my_params = ('', '', '600000', '2', 'no', '40', '60', '', 'Чиланзор')
+# x_url = config('the_url')
+#     for ind, part in enumerate(url_list):
+#         print(ind, part)
+def make_url(url: str, query_params: tuple) -> str:
+    url_list = url.split('&')
+    zip_list = list(zip(url_list, query_params))
+    the_list = [''.join(x) for x in zip_list]
+    ready_url = '&'.join(the_list)
+    return ready_url
 
 
 def get_cards(url: str) -> List[str]:
