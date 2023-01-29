@@ -5,6 +5,7 @@ from random import randint
 from datetime import datetime
 from typing import Dict, List
 from bs4 import BeautifulSoup
+from decouple import config
 
 # for using fake useragent
 # ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
@@ -103,4 +104,5 @@ def check_database(card: str) -> None:
             print(f'●Объявление ---{title}--- добавлено в базу данных')
             print(f'Время добавления в базу данных: {time.ctime(time.time())}')
             print(f'Время с начала запуска скрипта: {time.time() - start_time}')
+
 

@@ -1,3 +1,5 @@
+import time
+from random import randint
 from typing import List
 from decouple import config
 from module import get_cards, get_offer, format_text
@@ -16,21 +18,22 @@ def main():
         db = Database(db_path='DB/realty4.db')
 
         cards: List[str] = get_cards(url=config('url'))
-        count = 0
         for card in cards:
-            print(cards)
-            count += 1
-        print(count)
-        print('=' * 30, f'\n{len(cards)}: {len(set(cards))}')
-        break
-                    # offer = get_offer(card)
-            # print(offer)
+            if not db.check_entry(card):
+                offer = get_offer(card)
+                text = format_text(offer)
+                tg.send_telegram(text)
+                db.send_to_db(offer)
 
-            # if db.check_entry(card):
-            #     offer = get_offer(card)
-            #     text = format_text(offer)
-            #     tg.send_telegram(text)
-            #     db.send_to_db(offer)
+        time.sleep(randint(30, 40))
+        # count = 0
+        #     count += 1
+        # print(count)
+        # print('=' * 30, f'\n{len(cards)}: {len(set(cards))}')
+        # break
+
+
+
 
 
 if __name__ == "__main__":
