@@ -29,7 +29,7 @@ def main():
                 db.send_to_db(offer) # TODO: adjust to pass more data
                 tg.send_telegram(text) # TODO: Filter by number.Check if having swapped this and previous
                 # lines is ok. # TODO: add sent or not field, add field with geenrated  link
-
+                pass # for test_branching
 
         time.sleep(randint(30, 40))
         # # count = 0
