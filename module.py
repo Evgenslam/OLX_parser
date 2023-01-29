@@ -6,8 +6,6 @@ from datetime import datetime
 from typing import Dict, List
 from bs4 import BeautifulSoup
 from decouple import config
-from functools import reduce
-from operator import add
 
 # for using fake useragent
 # ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
@@ -78,6 +76,7 @@ def get_offer(card: str) -> Dict[str, str]:
     offer: dict = {}
     loctime = card.find('p', {'data-testid': 'location-date'}).text
     current_date = str(datetime.now().date())
+
     offer["title"] = card.find('h6').text
     offer["price"] = card.find('p', {'data-testid': 'ad-price'}).text
     offer["district"] = loctime.split(' - ')[0].lstrip('Ташкент, ')
