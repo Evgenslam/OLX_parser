@@ -38,6 +38,3 @@ class Database:
             cursor.execute('''DELETE FROM offers''')
 
 
-
-# db = Database(db_path='DB/realty4.db')
-# db.del_db_content()

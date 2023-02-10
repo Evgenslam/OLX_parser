@@ -1,7 +1,6 @@
 import time
 import sqlite3
 import requests
-from random import randint
 from datetime import datetime
 from typing import Dict, List
 from bs4 import BeautifulSoup
@@ -9,12 +8,6 @@ from decouple import config
 
 # for using fake useragent
 # ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
-
-# for shortening URL
-# params = {
-#     'currency': 'UZS',
-#     'search[filter_enum_comission][0]': 'no'
-# }
 
 # for proxy rotation
 #proxy_list: dict = config('proxy_list')
@@ -26,30 +19,7 @@ my_headers: dict = {
 }
 
 
-def ask_parameters() -> tuple:
-    district_targ = input('В каком районе хотели бы снять квартиру: ')  # проверка в БД
-    rooms_targ = input('Сколько комнат: ')
-    price_targ = input('Максимальная стоимость в сумах, которую вы готовы заплатить: ')
-    commision_targ = input(
-        'Готовы ли вы рассматривать варианты с комиссией (да/нет): ')  # проверка в параметрах и БД
-    area_from_targ = input('Площадь от: ')
-    area_to_targ = input('Площадь до: ')
-    return '', '', price_targ, rooms_targ, ['no', 'yes'][commision_targ == 'да'], area_from_targ, area_to_targ, '', \
-                                                                          district_targ
-
-# my_params = ('', '', '600000', '2', 'no', '40', '60', '', 'Чиланзор')
-# x_url = config('the_url')
-#     for ind, part in enumerate(url_list):
-#         print(ind, part)
-def make_url(url: str, query_params: tuple) -> str:
-    url_list = url.split('&')
-    zip_list = list(zip(url_list, query_params))
-    the_list = [''.join(x) for x in zip_list]
-    ready_url = '&'.join(the_list)
-    return ready_url
-
-
-def get_cards(url: str) -> List[str]:
+def get_cards(url: str, payload: dict) -> List[str]:
     '''
     This function extracts individual ad cards using BeautifulSoup
     '''
@@ -58,7 +28,7 @@ def get_cards(url: str) -> List[str]:
     # proxies = {'http': 'http://' + random_proxy}
     try:
         # print(f'Using proxy {random_proxy}')
-        response = requests.get(url=url, headers=my_headers)  # , proxies=proxies
+        response = requests.get(url=url, headers=my_headers, params=payload)  # , proxies=proxies
         response.encoding = 'utf-8'
         soup = BeautifulSoup(response.text, 'lxml')
         cards = [x for x in soup.find_all('div', {"data-cy": "l-card"}) if
