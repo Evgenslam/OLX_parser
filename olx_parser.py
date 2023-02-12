@@ -7,7 +7,7 @@ from client import register_handlers
 
 '''
 This version utilizes aiogram.
-In the current version of the script the parameters are obtained via Telegram chat from the user to generate a 
+In the current version  of the script the parameters are obtained via Telegram chat from the user to generate a 
 url for further parsing and sending the info back to the user.
 '''
 
