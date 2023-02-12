@@ -11,4 +11,4 @@ no_button: InlineKeyboardButton  = InlineKeyboardButton(
                                     callback_data='no'
 )
 
-yes_no_menu_inl.add(yes_button).add(no_button)
+yes_no_menu_inl.row(yes_button, no_button)

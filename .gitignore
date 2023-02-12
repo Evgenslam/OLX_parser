@@ -10,4 +10,3 @@ venv/
 setup.cfg
 .pytest_cache/
 .pre-commit-config.yaml
-rehab.py
