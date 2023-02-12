@@ -9,8 +9,9 @@ from telegram import Telegram
 from decouple import config
 from module import get_cards, get_offer, format_text
 from typing import List
+from pprint import pprint
 
-user_phone = input('Пожалуйста, введите свой номер телефона: ')
+#user_phone = input('Пожалуйста, введите свой номер телефона: ')
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 
@@ -19,6 +20,7 @@ the_payload = {
            'search[filter_float_price:from]': None,
            'search[filter_float_price:to]': None
            }
+user_tg_ids = []
 
 class FSMSelectParams(StatesGroup):
     price_from = State()
@@ -40,6 +42,13 @@ async def command_start(message: types.Message, state: FSMContext):
     Запуск бота. Предлагаем выбрать параметры. Сначала минимальная цена. Переводим в состояние price_to.
     '''
     try:
+        user_tg_id = message['from']['id']
+        if user_tg_id not in user_tg_ids:
+            user_tg_ids.append(user_tg_id)
+        pprint(message)
+        pprint(user_tg_ids)
+        async with state.proxy() as data:
+            data['user_tg_id'] = message['from']['id']
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
                              'платить в месяц? Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
         await FSMSelectParams.price_from.set()
@@ -68,7 +77,7 @@ async def process_price_to(message: types.Message, state: FSMContext):
     await FSMSelectParams.start_parsing.set()
 
 
-def parse_data(callback: types.CallbackQuery):
+def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
     while True:
         db = Database(db_path='DB/realty5.db')  # TODO: add number field
@@ -76,7 +85,8 @@ def parse_data(callback: types.CallbackQuery):
         for card in cards:
             if not db.is_in_db(card):
                 offer = get_offer(card)
-                offer['user_phone'] = user_phone
+                offer['user_id'] = user_tg_ids[-1]
+                print(offer)
                 text = format_text(offer)
                 db.send_to_db(offer)   # TODO: adjust to pass more data
                 tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message

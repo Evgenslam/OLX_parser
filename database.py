@@ -25,7 +25,7 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                             INSERT INTO offers
-                            VALUES(NULL, :user_phone, :title, :price, :district, :time, :lnk)
+                            VALUES(NULL, :user_id, :title, :price, :district, :time, :lnk)
                         ''', offer)
             conn.commit()
             print(f'●Объявление ---{offer["title"]}--- добавлено в базу данных')
