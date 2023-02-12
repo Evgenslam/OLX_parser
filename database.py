@@ -20,7 +20,7 @@ class Database:
             result = cursor.fetchone()
             return result
 
-    def send_to_db(self, offer: str):
+    def send_to_db(self, offer: dict):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''

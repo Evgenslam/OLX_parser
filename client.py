@@ -3,7 +3,7 @@ from random import randint
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.dispatcher import FSMContext
-from keyboards import yes_no_menu_inl
+from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict
 from database import Database
 from telegram import Telegram
 from decouple import config
@@ -15,15 +15,15 @@ from pprint import pprint
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 
-the_payload = {'currency': 'UZS'}
-           # 'search[filter_float_price:from]': None,
-           # 'search[filter_float_price:to]': None
-           # }
-user_tg_ids = []
+the_payload = {'currency': 'UZS',
+               'districts': []
+               }
+user_tg_ids = [] #TODO: find a place-holder
 
 class FSMSelectParams(StatesGroup):
     price_from = State()
     price_to = State()
+    district = State()
     start_parsing = State()
     # rooms_from = State()
     # rooms_to = State()
@@ -49,6 +49,7 @@ async def command_start(message: types.Message, state: FSMContext):
             data['user_tg_id'] = message['from']['id']
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
                              'платить в месяц? Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
+        #TODO: make kb for better UX
         await FSMSelectParams.price_from.set()
     except:
         await message.reply('Общение с ботом через ЛС. Напишите ему: ')
@@ -74,36 +75,44 @@ async def process_price_from(message: types.Message, state: FSMContext):
     # the_payload['search[filter_float_price:from]'] = state.get_data()
     the_payload['search[filter_float_price:from]'] = message.text
     await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
-                        'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
+                        'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.') #TODO: make kb for better UX
     await FSMSelectParams.price_to.set()
 
 
 # @dp.message_handler()
 async def process_price_to(message: types.Message, state: FSMContext):
-    #nullify the state.proxy()
-    #go back to start
     the_payload['search[filter_float_price:to]'] = message.text
-    await message.answer('Спасибо ваши данные зарегстрированы.')
-    await state.finish()
-    await message.answer('Начать поиск и рассылку по вашему запросу?',
+    await message.answer('Выберите, пожалуйста, район.',  #TODO: how to pick several districts at once?
+                        reply_markup=district_menu_inl)
+    await FSMSelectParams.district.set()
+
+# @dp.message_handler()
+async def process_district(callback: types.CallbackQuery, state: FSMContext):
+    pprint(callback)
+    the_payload['districts'].append(districts_dict[callback.data]) #TODO: sort out memory thing
+    pprint(the_payload)
+    await callback.message.answer('Спасибо ваши данные зарегстрированы.')
+    await callback.message.answer('Начать поиск и рассылку по вашему запросу?',
                         reply_markup=yes_no_menu_inl)
     await FSMSelectParams.start_parsing.set()
 
 
+
 def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
+    search_district = the_payload.pop('districts')
     while True:
-        db = Database(db_path='DB/realty5.db')  # TODO: add number field
+        db = Database(db_path='DB/realty5.db')
         cards: List[str] = get_cards(url=url, payload=the_payload)
         for card in cards:
             if not db.is_in_db(card):
-                offer = get_offer(card)
-                offer['user_id'] = user_tg_ids[-1]
-                print(offer)
-                text = format_text(offer)
-                db.send_to_db(offer)   # TODO: adjust to pass more data
-                tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
-                                       # TODO: add sent or not field, add field with generated  link
+                offer = get_offer(card, search_district)
+                if offer:
+                    offer['user_id'] = user_tg_ids[-1]
+                    text = format_text(offer)
+                    db.send_to_db(offer)
+                    tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
+                                           # TODO: add sent or not field, add field with generated link
 
         time.sleep(randint(30, 40))
 
@@ -113,4 +122,5 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(cancel_input, commands=['cancel'], state='*')
     dp.register_message_handler(process_price_from, state=FSMSelectParams.price_from)
     dp.register_message_handler(process_price_to, state=FSMSelectParams.price_to)
+    dp.register_callback_query_handler(process_district, state=FSMSelectParams.district)
     dp.register_callback_query_handler(parse_data, text=['yes'], state=FSMSelectParams.start_parsing)
