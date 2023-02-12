@@ -8,7 +8,9 @@ class Database:
     def __init__(self, db_path):
         self.db_path = db_path
 
-    def check_entry(self, card: str):
+    # TODO: add create_db function
+
+    def is_in_db(self, card: str):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             title = card.find('h6').text
@@ -23,7 +25,7 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                             INSERT INTO offers
-                            VALUES(NULL, :title, :price, :district, :time, :lnk)
+                            VALUES(NULL, :user_phone, :title, :price, :district, :time, :lnk)
                         ''', offer)
             conn.commit()
             print(f'●Объявление ---{offer["title"]}--- добавлено в базу данных')
