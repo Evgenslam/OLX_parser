@@ -15,11 +15,10 @@ from pprint import pprint
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 
-the_payload = {
-           'currency': 'UZS',
-           'search[filter_float_price:from]': None,
-           'search[filter_float_price:to]': None
-           }
+the_payload = {'currency': 'UZS'}
+           # 'search[filter_float_price:from]': None,
+           # 'search[filter_float_price:to]': None
+           # }
 user_tg_ids = []
 
 class FSMSelectParams(StatesGroup):
@@ -36,17 +35,16 @@ class FSMSelectParams(StatesGroup):
     # stop_delivery = State()
 
 
-# @dp.message_handler(commands=['start'])
+# @dp.message_handler(commands=['start'], state='*')
 async def command_start(message: types.Message, state: FSMContext):
     '''
     Запуск бота. Предлагаем выбрать параметры. Сначала минимальная цена. Переводим в состояние price_to.
+    When bot is running
     '''
     try:
         user_tg_id = message['from']['id']
         if user_tg_id not in user_tg_ids:
             user_tg_ids.append(user_tg_id)
-        pprint(message)
-        pprint(user_tg_ids)
         async with state.proxy() as data:
             data['user_tg_id'] = message['from']['id']
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
@@ -54,6 +52,19 @@ async def command_start(message: types.Message, state: FSMContext):
         await FSMSelectParams.price_from.set()
     except:
         await message.reply('Общение с ботом через ЛС. Напишите ему: ')
+
+
+# @dp.message_handler(commands=['cancel'], state=*)
+async def cancel_input(message: types.Message, state: FSMContext):
+    global the_payload
+    current_state = await state.get_state()
+    if current_state:
+        the_payload = {'currency': 'UZS'}
+        await message.answer('Чтобы заново ввести параметры, нажмите /start')
+        await state.finish()
+    else:
+        await message.answer('Вы пока ещё ничего не вводили. Прямо сейчас можете ввести минимальную цену')
+        await FSMSelectParams.price_from.set()
 
 
 # @dp.message_handler()
@@ -69,6 +80,8 @@ async def process_price_from(message: types.Message, state: FSMContext):
 
 # @dp.message_handler()
 async def process_price_to(message: types.Message, state: FSMContext):
+    #nullify the state.proxy()
+    #go back to start
     the_payload['search[filter_float_price:to]'] = message.text
     await message.answer('Спасибо ваши данные зарегстрированы.')
     await state.finish()
@@ -96,7 +109,8 @@ def parse_data(callback: types.CallbackQuery, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(command_start, commands=['start'], state=None)
+    dp.register_message_handler(command_start, commands=['start'], state='*')
+    dp.register_message_handler(cancel_input, commands=['cancel'], state='*')
     dp.register_message_handler(process_price_from, state=FSMSelectParams.price_from)
     dp.register_message_handler(process_price_to, state=FSMSelectParams.price_to)
     dp.register_callback_query_handler(parse_data, text=['yes'], state=FSMSelectParams.start_parsing)
