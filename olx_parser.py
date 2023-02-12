@@ -11,7 +11,7 @@ In the current version  of the script the parameters are obtained via Telegram c
 url for further parsing and sending the info back to the user.
 '''
 
-storage = MemoryStorage() # TODO: do we actually need Memory storage here?
+storage = MemoryStorage() # TODO: how do we use Memory storage here?
 bot = Bot(token=config('bot_token'))
 dp = Dispatcher(bot, storage=storage)
 
