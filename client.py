@@ -88,9 +88,7 @@ async def process_price_to(message: types.Message, state: FSMContext):
 
 # @dp.message_handler()
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
-    pprint(callback)
     the_payload['districts'].append(districts_dict[callback.data]) #TODO: sort out memory thing
-    pprint(the_payload)
     await callback.message.answer('Спасибо ваши данные зарегстрированы.')
     await callback.message.answer('Начать поиск и рассылку по вашему запросу?',
                         reply_markup=yes_no_menu_inl)
