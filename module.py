@@ -60,6 +60,7 @@ def format_text(offer: Dict[str, str]) -> str:
     '''
     This function formats an offer into text ready for posting in telegram
     '''
+    # TODO: fix indents for better UX
     text: str = f"""{offer['price']}
     {offer['district']}
     {offer['lnk']}

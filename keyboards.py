@@ -18,7 +18,7 @@ districts_dict = dict(zip(districts_eng, districts))
 yes_no_dict = {'yes': 'да', 'no': 'нет'}
 
 district_menu_inl = create_inline_kb(2, **districts_dict)
-yes_no_menu_inl = create_inline_kb(1, **yes_no_dict)
+yes_no_menu_inl = create_inline_kb(2, **yes_no_dict)
 
 
 # yes_no_menu_inl: InlineKeyboardMarkup = InlineKeyboardMarkup()

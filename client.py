@@ -15,9 +15,10 @@ from pprint import pprint
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 
-the_payload = {'currency': 'UZS',
-               'districts': []
-               }
+the_payload = {
+                'currency': 'UZS',
+                'districts': [],
+}
 user_tg_ids = [] #TODO: find a place-holder
 
 class FSMSelectParams(StatesGroup):
@@ -60,7 +61,7 @@ async def cancel_input(message: types.Message, state: FSMContext):
     global the_payload
     current_state = await state.get_state()
     if current_state:
-        the_payload = {'currency': 'UZS'}
+        the_payload = {'currency': 'UZS', 'districts' : []}
         await message.answer('Чтобы заново ввести параметры, нажмите /start')
         await state.finish()
     else:
@@ -96,10 +97,10 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 
 
 
-def parse_data(callback: types.CallbackQuery, state: FSMContext):
+async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
     search_district = the_payload.pop('districts')
-    while True:
+    while True: # TODO: add a state to be able to finish
         db = Database(db_path='DB/realty5.db')
         cards: List[str] = get_cards(url=url, payload=the_payload)
         for card in cards:
@@ -108,7 +109,7 @@ def parse_data(callback: types.CallbackQuery, state: FSMContext):
                 if offer:
                     offer['user_id'] = user_tg_ids[-1]
                     text = format_text(offer)
-                    db.send_to_db(offer)
+                    db.send_to_db(offer)      # TODO: поменять chat id на динамический, вытаскивать из message
                     tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
                                            # TODO: add sent or not field, add field with generated link
 
