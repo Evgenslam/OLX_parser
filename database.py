@@ -15,8 +15,13 @@ class Database:
     #def create_db():
 
     def verification(self, user_id):
-        response = self.db_path.fetchrow(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
-        return True if response else False
+        with sqlite3.connect(self.db_path) as conn:
+            # response = conn.fetchrow(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
+            # return True if response else False
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
+            result = cursor.fetchone()
+            return result
 
     def is_in_db(self, card: str):
         with sqlite3.connect(self.db_path) as conn:
