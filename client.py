@@ -19,33 +19,34 @@ the_payload = {
                 'currency': 'UZS',
                 'districts': [],
 }
-user_tg_ids = [] #TODO: find a place-holder
+user_tg_ids = [] #TODO: find a place-holder. Should be in db (verification func)
 
 class FSMSelectParams(StatesGroup):
     price_from = State()
     price_to = State()
     district = State()
-    start_parsing = State()
-    # rooms_from = State()
-    # rooms_to = State()
-    # area_from = State()
-    # area_to = State()
-    # start_delivery = State()
-    # check_params = State()
-    # change_params = State()
-    # stop_delivery = State()
+    #start_parsing = State()
+    rooms_from = State()
+    rooms_to = State()
+    area_from = State()
+    area_to = State()
+    start_delivery = State()
+    check_params = State()
+    change_params = State()
+    stop_delivery = State()
 
 
 # @dp.message_handler(commands=['start'], state='*')
 async def command_start(message: types.Message, state: FSMContext):
     '''
-    Запуск бота. Предлагаем выбрать параметры. Сначала минимальная цена. Переводим в состояние price_to.
-    When bot is running
+    Launch bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
+    FMS to price_to.
     '''
     try:
         user_tg_id = message['from']['id']
-        if user_tg_id not in user_tg_ids:
-            user_tg_ids.append(user_tg_id)
+        
+        # if user_tg_id not in user_tg_ids:
+        #     user_tg_ids.append(user_tg_id)
         async with state.proxy() as data:
             data['user_tg_id'] = message['from']['id']
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '

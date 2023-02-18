@@ -9,6 +9,14 @@ class Database:
         self.db_path = db_path
 
     # TODO: add create_db function
+    # TODO: add verification function
+    # TODO: make Database funcs async
+
+    #def create_db():
+
+    def verification(self, user_id):
+        response = self.db_path.fetchrow(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
+        return True if response else False
 
     def is_in_db(self, card: str):
         with sqlite3.connect(self.db_path) as conn:
