@@ -39,10 +39,11 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                             INSERT INTO offers
-                            VALUES(NULL, :user_id, :title, :price, :district, :time, :lnk, NULL, :search_params)
+                            VALUES(NULL, :user_id, :название, :цена, :район, :время_публикации, :ссылка, NULL, 
+                            :параметры_поиска)
                         ''', offer)
             conn.commit()
-            print(f'●Объявление ---{offer["title"]}--- добавлено в базу данных')
+            print(f'●Объявление ---{offer["название"]}--- добавлено в базу данных')
             print(f'Время добавления в базу данных: {time.ctime(time.time())}')
             print(f'Время с начала запуска скрипта: {time.time() - start_time}')
 

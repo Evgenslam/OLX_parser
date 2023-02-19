@@ -39,33 +39,33 @@ def get_cards(url: str, payload: dict) -> List[str]:
     return cards
 
 
-def get_offer(card: str) -> Dict[str, str]:        #, districts: List[str]
+def get_offer(card: str, search_districts: List[str]) -> Dict[str, str]:
     """
     This parser function extracts name, price, district, date and time as well ass link from an individual ad card
     """
     offer: dict = {}
     loctime = card.find('p', {'data-testid': 'location-date'}).text
-    district = loctime.split(' - ')[0].split()[1]  # lstrip('Ташкент, ').rstrip(' район')
+    district = loctime.split(' - ')[0].split()[1]  # TODO: district check may be moved to db.is_in_db
     current_date = str(datetime.now().date())
-    #if not districts or district in districts:
-    offer["title"] = card.find('h6').text
-    offer["price"] = card.find('p', {'data-testid': 'ad-price'}).text
-    #offer["district"] = district
-    offer["time"] = loctime.split(' - ')[1].replace('Сегодня', current_date)
-    offer["lnk"] = 'https://www.olx.uz/' + card.find('a')['href']
-    return offer
+    if not search_districts or district in search_districts:
+        offer["название"] = card.find('h6').text
+        offer["цена"] = card.find('p', {'data-testid': 'ad-price'}).text
+        offer["район"] = district
+        offer["время_публикации"] = loctime.split(' - ')[1].replace('Сегодня', current_date)
+        offer["ссылка"] = 'https://www.olx.uz/' + card.find('a')['href']
+        return offer
 
 
 def format_text(offer: Dict[str, str]) -> str:
     '''
     This function formats an offer into text ready for posting in telegram
     '''
-    # TODO: fix indents for better UX
-    text: str = f"""{offer['price']}
-    {offer['district']}
-    {offer['lnk']}
-    {offer['title']}
-    {offer['time']}"""
+    # TODO: fix indents for better UX (see Stepik course)
+    text: str = f"""{offer['цена']}
+    {offer['район']}
+    {offer['ссылка']}
+    {offer['название']}
+    {offer['время_публикации']}"""
     return text
 
 

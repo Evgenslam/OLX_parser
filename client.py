@@ -105,23 +105,21 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
     user_id = the_payload.pop('user_id')
-    search_district = str(the_payload.pop('districts'))
+    print(user_id)
+    search_districts = the_payload.pop('districts')
+    print(search_districts)
 #    search_link = the_payload.pop('search_params') ?
-    print(the_payload)
-    print(search_district, type(search_district))
+
     while True: # TODO: add a state to be able to finish
         db = Database(db_path='DB/realty5.db')
         cards: List[str] = get_cards(url=url, payload=the_payload)
         for card in cards:
             if not db.is_in_db(card):
-                offer = get_offer(card)
+                offer = get_offer(card, search_districts)
                 if offer:
                     offer['user_id'] = user_id
-                    offer['district'] = search_district
                     #offer['search_link']
-                    print(str(offer.items()))
-                    offer['search_params'] = str(offer.items())
-
+                    offer['параметры_поиска'] = str(offer.items())
                     text = format_text(offer)
                     db.send_to_db(offer)      # TODO: поменять chat id на динамический, вытаскивать из message
                     tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
