@@ -26,7 +26,7 @@ class FSMSelectParams(StatesGroup):
     price_from = State()
     price_to = State()
     district = State()
-    #start_parsing = State()
+    start_parsing = State()
     rooms_from = State()
     rooms_to = State()
     area_from = State()
@@ -45,6 +45,7 @@ async def command_start(message: types.Message, state: FSMContext):
     '''
     # try:
     user_tg_id = message['from']['id']
+    the_payload['user_id'] = user_tg_id
     if db.verification(user_tg_id):
         await message.answer('Я тебя знаю, приятель!')
     # if user_tg_id not in user_tg_ids:
@@ -101,23 +102,32 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 
 
 
-# async def parse_data(callback: types.CallbackQuery, state: FSMContext):
-#     print('Ща будем парсить')
-#     search_district = the_payload.pop('districts')
-#     while True: # TODO: add a state to be able to finish
-#         db = Database(db_path='DB/realty5.db')
-#         cards: List[str] = get_cards(url=url, payload=the_payload)
-#         for card in cards:
-#             if not db.is_in_db(card):
-#                 offer = get_offer(card, search_district)
-#                 if offer:
-#                     offer['user_id'] = user_tg_ids[-1]
-#                     text = format_text(offer)
-#                     db.send_to_db(offer)      # TODO: поменять chat id на динамический, вытаскивать из message
-#                     tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
-#                                            # TODO: add sent or not field, add field with generated link
-#
-#         time.sleep(randint(30, 40))
+async def parse_data(callback: types.CallbackQuery, state: FSMContext):
+    print('Ща будем парсить')
+    user_id = the_payload.pop('user_id')
+    search_district = str(the_payload.pop('districts'))
+#    search_link = the_payload.pop('search_params') ?
+    print(the_payload)
+    print(search_district, type(search_district))
+    while True: # TODO: add a state to be able to finish
+        db = Database(db_path='DB/realty5.db')
+        cards: List[str] = get_cards(url=url, payload=the_payload)
+        for card in cards:
+            if not db.is_in_db(card):
+                offer = get_offer(card)
+                if offer:
+                    offer['user_id'] = user_id
+                    offer['district'] = search_district
+                    #offer['search_link']
+                    print(str(offer.items()))
+                    offer['search_params'] = str(offer.items())
+
+                    text = format_text(offer)
+                    db.send_to_db(offer)      # TODO: поменять chat id на динамический, вытаскивать из message
+                    tg.send_telegram(text) # TODO: Filter by number. Change tg to send_message
+                                           # TODO: add sent or not field, add field with generated link
+
+        time.sleep(randint(30, 40))
 
 
 def register_handlers(dp: Dispatcher):
@@ -126,4 +136,4 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(process_price_from, state=FSMSelectParams.price_from)
     dp.register_message_handler(process_price_to, state=FSMSelectParams.price_to)
     dp.register_callback_query_handler(process_district, state=FSMSelectParams.district)
-#    dp.register_callback_query_handler(parse_data, text=['yes'], state=FSMSelectParams.start_parsing)
+    dp.register_callback_query_handler(parse_data, text=['yes'], state=FSMSelectParams.start_parsing)

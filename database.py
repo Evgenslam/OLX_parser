@@ -19,7 +19,8 @@ class Database:
             # response = conn.fetchrow(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
             # return True if response else False
             cursor = conn.cursor()
-            cursor.execute(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
+            cursor.execute(f'SELECT user_id FROM offers WHERE user_id={user_id}')
+            # TODO : f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id}) Чо за SELECT EXISTS?
             result = cursor.fetchone()
             return result
 
@@ -38,7 +39,7 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                             INSERT INTO offers
-                            VALUES(NULL, :user_id, :title, :price, :district, :time, :lnk)
+                            VALUES(NULL, :user_id, :title, :price, :district, :time, :lnk, NULL, :search_params)
                         ''', offer)
             conn.commit()
             print(f'●Объявление ---{offer["title"]}--- добавлено в базу данных')
