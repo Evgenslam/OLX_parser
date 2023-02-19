@@ -9,8 +9,8 @@ class Database:
         self.db_path = db_path
 
     # TODO: add create_db function
-    # TODO: add verification function
     # TODO: make Database funcs async
+
 
     #def create_db():
 
@@ -39,7 +39,7 @@ class Database:
             cursor = conn.cursor()
             cursor.execute('''
                             INSERT INTO offers
-                            VALUES(NULL, :user_id, :название, :цена, :район, :время_публикации, :ссылка, NULL, 
+                            VALUES(NULL, :user_id, :название, :цена, :район, :время_публикации, :ссылка, :search_link, 
                             :параметры_поиска)
                         ''', offer)
             conn.commit()

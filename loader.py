@@ -9,3 +9,4 @@ bot = Bot(token=config('bot_token'))
 dp = Dispatcher(bot, storage=storage)
 db = Database(db_path='DB/realty5.db')
 
+db.del_db_content()

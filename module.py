@@ -52,7 +52,7 @@ def get_offer(card: str, search_districts: List[str]) -> Dict[str, str]:
         offer["цена"] = card.find('p', {'data-testid': 'ad-price'}).text
         offer["район"] = district
         offer["время_публикации"] = loctime.split(' - ')[1].replace('Сегодня', current_date)
-        offer["ссылка"] = 'https://www.olx.uz/' + card.find('a')['href']
+        offer["ссылка"] = 'https://www.olx.uz/' + card.find('a')['href'] # TODO: make a shorter link
         return offer
 
 

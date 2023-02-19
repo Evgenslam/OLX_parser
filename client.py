@@ -1,4 +1,5 @@
 import time
+import requests
 from random import randint
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -105,10 +106,9 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
     user_id = the_payload.pop('user_id')
-    print(user_id)
     search_districts = the_payload.pop('districts')
-    print(search_districts)
-#    search_link = the_payload.pop('search_params') ?
+    search_link = requests.get(url=url, params=the_payload).url # TODO: use urllib to avoid making an extra request
+    print(search_link)
 
     while True: # TODO: add a state to be able to finish
         db = Database(db_path='DB/realty5.db')
@@ -118,7 +118,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                 offer = get_offer(card, search_districts)
                 if offer:
                     offer['user_id'] = user_id
-                    #offer['search_link']
+                    offer['search_link'] = search_link
                     offer['параметры_поиска'] = str(offer.items())
                     text = format_text(offer)
                     db.send_to_db(offer)      # TODO: поменять chat id на динамический, вытаскивать из message
