@@ -8,16 +8,10 @@ class Database:
     def __init__(self, db_path):
         self.db_path = db_path
 
-    # TODO: add create_db function
     # TODO: make Database funcs async
-
-
-    #def create_db():
 
     def verification(self, user_id):
         with sqlite3.connect(self.db_path) as conn:
-            # response = conn.fetchrow(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
-            # return True if response else False
             cursor = conn.cursor()
             cursor.execute(f'SELECT user_id FROM offers WHERE user_id={user_id}')
             # TODO : f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id}) Чо за SELECT EXISTS?
@@ -47,14 +41,12 @@ class Database:
             print(f'Время добавления в базу данных: {time.ctime(time.time())}')
             print(f'Время с начала запуска скрипта: {time.time() - start_time}')
 
-    def fetch(self, user_id):
+    def fetch(self, column: str, user_id: str):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute(f'''SELECT search_params FROM offers WHERE (ad_id = (SELECT MAX(ad_id) FROM offers) and
-            user_id = (?))''', (user_id,))
+            cursor.execute(f'''SELECT {column} FROM offers WHERE (ad_id = (SELECT MAX(ad_id) FROM offers) and
+            user_id = (?))''', (user_id,)) # TODO: rewrite properly
             return cursor.fetchone()
-
-        #cursor.execute(f'SELECT user_id FROM offers WHERE user_id={user_id}')
 
     def del_db_content(self):
         with sqlite3.connect(self.db_path) as conn:

@@ -109,7 +109,6 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
-    print(the_payload)
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
     user_id = the_payload.pop('user_id')
     search_params = copy.deepcopy(the_payload)
@@ -133,19 +132,17 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
         time.sleep(randint(30, 40))
 
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
-    print('Ща будем парсить')
+    print('Возобновляем рассылку.')
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
-    user_id = callback.message['chat']['id']
-    the_payload = eval(*db.fetch(user_id))
-    search_params = copy.deepcopy(the_payload)
-    search_districts = the_payload.pop('districts')
-    search_link = requests.get(url=url, params=the_payload).url # TODO: use urllib to avoid making an extra request
-
+    user_id = callback.message['chat']['id']   #TODO: fetch from memory
+    search_link = db.fetch('search_link', user_id)[0]
 
     while True: # TODO: add a state to be able to finish
-        cards: List[str] = get_cards(url=url, payload=the_payload)
+        cards: List[str] = get_cards(url=search_link)
         for card in cards:
             if not db.is_in_db(card):
+                search_params = eval(*db.fetch('search_params', user_id))
+                search_districts = search_params['districts']
                 offer = get_offer(card, search_districts)
                 if offer:
                     offer['user_id'] = user_id

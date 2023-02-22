@@ -19,7 +19,7 @@ my_headers: dict = {
 }
 
 
-def get_cards(url: str, payload: dict) -> List[str]:
+def get_cards(url: str, *args: dict) -> List[str]:
     '''
     This function extracts individual ad cards using BeautifulSoup
     '''
@@ -28,7 +28,7 @@ def get_cards(url: str, payload: dict) -> List[str]:
     # proxies = {'http': 'http://' + random_proxy}
     try:
         # print(f'Using proxy {random_proxy}')
-        response = requests.get(url=url, headers=my_headers, params=payload)  # , proxies=proxies
+        response = requests.get(url=url, headers=my_headers, params=args)  # , proxies=proxies
         response.encoding = 'utf-8'
         soup = BeautifulSoup(response.text, 'lxml')
         cards = [x for x in soup.find_all('div', {"data-cy": "l-card"}) if
