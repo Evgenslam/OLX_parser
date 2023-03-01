@@ -19,7 +19,7 @@ my_headers: dict = {
 }
 
 
-def get_cards(url: str, *args: dict) -> List[str]:
+def get_cards(url: str) -> List[str]:
     '''
     This function extracts individual ad cards using BeautifulSoup
     '''
@@ -28,7 +28,7 @@ def get_cards(url: str, *args: dict) -> List[str]:
     # proxies = {'http': 'http://' + random_proxy}
     try:
         # print(f'Using proxy {random_proxy}')
-        response = requests.get(url=url, headers=my_headers, params=args)  # , proxies=proxies
+        response = requests.get(url=url, headers=my_headers)  # , proxies=proxies
         response.encoding = 'utf-8'
         soup = BeautifulSoup(response.text, 'lxml')
         cards = [x for x in soup.find_all('div', {"data-cy": "l-card"}) if
@@ -100,5 +100,17 @@ def check_database(card: str) -> None:
             print(f'●Объявление ---{title}--- добавлено в базу данных')
             print(f'Время добавления в базу данных: {time.ctime(time.time())}')
             print(f'Время с начала запуска скрипта: {time.time() - start_time}')
+
+
+def convert_params(params: dict) -> str:
+    trans_dict = {
+        'минимальная цена': 'search[filter_float_price:from]',
+        'максимальная цена': 'search[filter_float_price:to]',
+        'районы': 'districts'
+    }
+    ru_params = {ru_param: params.get(trans_dict[ru_param]) for ru_param in trans_dict}
+    ru_params_dict = [f'{key} : {val}' for key, val in ru_params.items()]
+    ru_params_str = '\n'.join(ru_params_dict)
+    return ru_params_str
 
 
