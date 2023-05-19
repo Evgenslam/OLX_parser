@@ -133,8 +133,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     search_link = requests.get(url=url, params=payload).url # TODO: use urllib to avoid making an extra request
 
     while True: # TODO: add a state to be able to finish
-        cards: List[str] = get_cards(url=search_link) # TODO: pass search_link from the above to avoid
-        # double job
+        cards: List[str] = get_cards(url=search_link) # TODO: pass search_link from the above to avoid double job
         for card in cards:
             if not db.is_in_db(card):
                 offer = get_offer(card, search_districts)
