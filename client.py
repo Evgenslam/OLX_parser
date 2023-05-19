@@ -125,12 +125,16 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
 
     user_query = await state.get_data()
+    print(user_query)
     user_id = user_query.pop('user_id')
     search_params = copy.deepcopy(user_query)
     print(search_params)
     search_districts = user_query.pop('districts')
+    print(search_districts)
     payload = payload_boilerplate | user_query
+    print(payload)
     search_link = requests.get(url=url, params=payload).url # TODO: use urllib to avoid making an extra request
+    print(search_link)
 
     while True: # TODO: add a state to be able to finish
         cards: List[str] = get_cards(url=search_link) # TODO: pass search_link from the above to avoid double job
