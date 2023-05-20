@@ -1,4 +1,3 @@
-from aiogram.utils import executor
 from client import register_handlers
 from loader import dp, bot
 

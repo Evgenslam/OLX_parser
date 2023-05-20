@@ -1,11 +1,13 @@
 import asyncio
-import time
 import copy
+from random import randint
+
 import requests
 from aiogram import types, Dispatcher, F
-from aiogram.filters import Command, Text
-from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.dispatcher import FSMContext
+from aiogram.fsm.context import FSMContext
+from aiogram.filters import Command, CommandStart, Text, StateFilter
+from aiogram.filters.state import StatesGroup, State
+from aiogram.fsm.state import default_state
 from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict, resume_alter_menu_inl
 from telegram import Telegram
 from decouple import config
@@ -39,14 +41,13 @@ class FSMSelectParams(StatesGroup):
 
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
-# @dp.message(Command(commands=["start"])) # new type of decorator
+# @dp.message(CommandStart(), StateFilter(default_state)) # new type of decorator
 async def command_start(message: types.Message, state: FSMContext): #not sure if state: FSMContext is used in the
     # newer version of aiogram
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
     '''
-    await state.finish()
     user_tg_id = message['from']['id']
     async with state.proxy() as data:
         data['user_id'] = message['from']['id']
@@ -58,7 +59,7 @@ async def command_start(message: types.Message, state: FSMContext): #not sure if
         await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: \n\n{ru_params}\n\n Посмотреть параметры '
                              'запроса можно также в меню.',
                              reply_markup=resume_alter_menu_inl)
-        await FSMSelectParams.resume_delivery.set()
+        await state.set_state(FSMSelectParams.resume_delivery)
 
     else:
         async with state.proxy() as data:
@@ -66,7 +67,7 @@ async def command_start(message: types.Message, state: FSMContext): #not sure if
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
                              'платить в месяц? Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
         # TODO: make kb for better UX
-        await FSMSelectParams.price_from.set()
+        await state.set_state(FSMSelectParams.price_from)
 
 
 # @dp.message(Command(commands=["cancel"]))
@@ -86,10 +87,9 @@ async def cancel_input(message: types.Message, state: FSMContext):
 async def process_price_from(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['search[filter_float_price:from]'] = message.text
-    # the_payload['search[filter_float_price:from]'] = message.text
     await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
                          'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')  # TODO: make kb for better UX
-    await FSMSelectParams.price_to.set()
+    await state.set_state(FSMSelectParams.price_to)
 
 
 # @dp.message()
@@ -99,19 +99,21 @@ async def process_price_to(message: types.Message, state: FSMContext):
     # the_payload['search[filter_float_price:to]'] = message.text
     await message.answer('Выберите, пожалуйста, район.',  # TODO: how to pick several districts at once?
                          reply_markup=district_menu_inl)
-    await FSMSelectParams.district.set()
+    await state.set_state(FSMSelectParams.district)
 
 
 # @dp.message()
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
+        print(callback)
         data['districts'] = []
         data['districts'].append(districts_dict[callback.data])
 
     await callback.message.answer('Спасибо ваши данные зарегстрированы. '
                                   'Начать поиск и рассылку по вашему запросу?',
                                   reply_markup=yes_no_menu_inl)
-    await FSMSelectParams.start_parsing.set()
+    await state.set_state(FSMSelectParams.start_parsing)
+
 
 # @dp.message()
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
@@ -126,7 +128,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
 
-    while await state.get_state() == 'FSMSelectParams:start_parsing':  # TODO: add a state to be able to finish
+    while await state.get_state() == 'FSMSelectParams:start_parsing':  # TODO: check if it has to be :start_parsing or .start_parsing
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
         for card in cards:
             if not db.is_in_db(card):
@@ -175,11 +177,11 @@ async def check_params(message: types.Message, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.message.register(command_start, Command(commands=['start']))
+    dp.message.register(command_start, CommandStart(), StateFilter(default_state))
     dp.message.register(cancel_input, Command(commands=['cancel']))
-    dp.message.register(process_price_from)
-    dp.message.register(process_price_to)
-    dp.callback_query.register(process_district)
-    dp.callback_query.register(parse_data, Text(text=['yes']))
-    dp.callback_query.register(resume_delivery, Text(text=['yes']))
-    dp.message.register(check_params, Command(commands=['see_my_params'])) # Not sure about states and text
+    dp.message.register(process_price_from, StateFilter(FSMSelectParams.price_from), F.text.isdigit())
+    dp.message.register(process_price_to, StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+    dp.callback_query.register(process_district, StateFilter(FSMSelectParams.district)) # TODO: add func with callback
+    dp.callback_query.register(parse_data, Text(text=['yes']), StateFilter(FSMSelectParams.start_parsing))
+    dp.callback_query.register(resume_delivery, Text(text=['yes']), StateFilter(FSMSelectParams.resume_delivery))
+    dp.message.register(check_params, Command(commands=['see_my_params']), StateFilter(FSMSelectParams.check_params))
