@@ -2,14 +2,14 @@ import asyncio
 import time
 import copy
 import requests
-from random import randint
 from aiogram import types, Dispatcher
+from aiogram.filters import Command
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.dispatcher import FSMContext
 from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict, resume_alter_menu_inl
 from telegram import Telegram
 from decouple import config
-from loader import db
+from loader import db, dp
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
 
@@ -39,7 +39,9 @@ class FSMSelectParams(StatesGroup):
 
 
 # @dp.message_handler(commands=['start'], state='*')
-async def command_start(message: types.Message, state: FSMContext):
+@dp.message(Command(commands=["start"]))
+async def command_start(message: types.Message, state: FSMContext): #not sure if state: FSMContext is used in the
+    # newer version of aiogram
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
@@ -68,6 +70,7 @@ async def command_start(message: types.Message, state: FSMContext):
 
 
 # @dp.message_handler(commands=['cancel'], state=*)
+@dp.message(Command(commands=["cancel"]))
 async def cancel_input(message: types.Message, state: FSMContext):
     global the_payload
     current_state = await state.get_state()
