@@ -19,7 +19,7 @@ def main():
     async def on_startup(_):
         print('Бот недвига вышел в онлайн')
     register_handlers(dp)
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+    dp.run_polling(bot)
 
 
 if __name__ == "__main__":
