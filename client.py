@@ -92,7 +92,7 @@ async def process_price_to(message: types.Message, state: FSMContext):
 @dp.callback_query(StateFilter(FSMSelectParams.district))
 async def gather_district(callback: types.CallbackQuery):
     global districts
-    await districts.append(callback.data)
+    districts.append(callback.data)
     await callback.message.answer('После выбора всех интерсующих вас районов, нажмите "выбрать".')
 
 
