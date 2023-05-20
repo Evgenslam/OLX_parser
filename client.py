@@ -2,8 +2,8 @@ import asyncio
 import time
 import copy
 import requests
-from aiogram import types, Dispatcher
-from aiogram.filters import Command
+from aiogram import types, Dispatcher, F
+from aiogram.filters import Command, Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.dispatcher import FSMContext
 from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict, resume_alter_menu_inl
@@ -180,6 +180,6 @@ def register_handlers(dp: Dispatcher):
     dp.message.register(process_price_from)
     dp.message.register(process_price_to)
     dp.callback_query.register(process_district)
-    dp.callback_query.register(parse_data, text=['yes'])
-    dp.callback_query.register(resume_delivery, text=['yes'])
+    dp.callback_query.register(parse_data, Text(text=['yes']))
+    dp.callback_query.register(resume_delivery, Text(text=['yes']))
     dp.message.register(check_params, Command(commands=['see_my_params'])) # Not sure about states and text
