@@ -38,8 +38,8 @@ class FSMSelectParams(StatesGroup):
     stop_delivery = State()
 
 
-# @dp.message_handler(commands=['start'], state='*')
-@dp.message(Command(commands=["start"]))
+# @dp.message_handler(commands=['start'], state='*') # old type of decorator
+# @dp.message(Command(commands=["start"])) # new type of decorator
 async def command_start(message: types.Message, state: FSMContext): #not sure if state: FSMContext is used in the
     # newer version of aiogram
     '''
@@ -69,8 +69,7 @@ async def command_start(message: types.Message, state: FSMContext): #not sure if
         await FSMSelectParams.price_from.set()
 
 
-# @dp.message_handler(commands=['cancel'], state=*)
-@dp.message(Command(commands=["cancel"]))
+# @dp.message(Command(commands=["cancel"]))
 async def cancel_input(message: types.Message, state: FSMContext):
     global the_payload
     current_state = await state.get_state()
@@ -83,7 +82,7 @@ async def cancel_input(message: types.Message, state: FSMContext):
         await FSMSelectParams.price_from.set()
 
 
-# @dp.message_handler()
+# @dp.message()
 async def process_price_from(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['search[filter_float_price:from]'] = message.text
@@ -93,7 +92,7 @@ async def process_price_from(message: types.Message, state: FSMContext):
     await FSMSelectParams.price_to.set()
 
 
-# @dp.message_handler()
+# @dp.message()
 async def process_price_to(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['search[filter_float_price:to]'] = message.text
@@ -103,7 +102,7 @@ async def process_price_to(message: types.Message, state: FSMContext):
     await FSMSelectParams.district.set()
 
 
-# @dp.message_handler()
+# @dp.message()
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['districts'] = []
@@ -114,7 +113,7 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
                                   reply_markup=yes_no_menu_inl)
     await FSMSelectParams.start_parsing.set()
 
-
+# @dp.message()
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Ща будем парсить')
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
@@ -142,7 +141,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                     # TODO: add sent or not field, add field with generated link
         await asyncio.sleep(randint(30, 40))
 
-
+# @dp.message()
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     print('Возобновляем рассылку.')
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
@@ -176,11 +175,11 @@ async def check_params(message: types.Message, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(command_start, commands=['start'], state='*')
-    dp.register_message_handler(cancel_input, commands=['cancel'], state='*')
-    dp.register_message_handler(process_price_from, state=FSMSelectParams.price_from)
-    dp.register_message_handler(process_price_to, state=FSMSelectParams.price_to)
-    dp.register_callback_query_handler(process_district, state=FSMSelectParams.district)
-    dp.register_callback_query_handler(parse_data, text=['yes'], state=FSMSelectParams.start_parsing)
-    dp.register_callback_query_handler(resume_delivery, text=['yes'], state=FSMSelectParams.resume_delivery)
-    dp.register_message_handler(check_params, commands=['see_my_params'], state='*')
+    dp.message.register(command_start, Command(commands=['start']))
+    dp.message.register(cancel_input, Command(commands=['cancel']))
+    dp.message.register(process_price_from)
+    dp.message.register(process_price_to)
+    dp.callback_query.register(process_district)
+    dp.callback_query.register(parse_data, text=['yes'])
+    dp.callback_query.register(resume_delivery, text=['yes'])
+    dp.message.register(check_params, Command(commands=['see_my_params'])) # Not sure about states and text
