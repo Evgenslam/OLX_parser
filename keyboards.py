@@ -37,7 +37,6 @@ district_ids = [12, 19, 22, 23, 13, 25, 20, 26, 24]
 districts_dict = dict(zip(districts_eng, districts))
 district_ids_dict = dict(zip(districts, district_ids))
 
-print(district_ids_dict)
 yes_no_dict = {'yes': 'да', 'no': 'нет'}
 resume_alter_dict = {'resume': 'Возобновить рассылку по этим параметрам', 'alter': 'Изменить параметры'}
 
