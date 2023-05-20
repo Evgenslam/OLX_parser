@@ -35,6 +35,7 @@ districts_eng = ['Mirzo-Ulugbekskii', 'Sergeliiskii', 'Yashnabadskii', 'Chilanza
 district_ids = [12, 19, 22, 23, 13, 25, 20, 26, 24]
 
 districts_dict = dict(zip(districts_eng, districts))
+districts_dict['finish'] = 'выбрать'
 district_ids_dict = dict(zip(districts, district_ids))
 
 yes_no_dict = {'yes': 'да', 'no': 'нет'}
@@ -45,15 +46,4 @@ yes_no_menu_inl = create_inline_kb(2, **yes_no_dict)
 resume_alter_menu_inl = create_inline_kb(2, **resume_alter_dict)
 
 
-# yes_no_menu_inl: InlineKeyboardMarkup = InlineKeyboardMarkup()
-# yes_button: InlineKeyboardButton = InlineKeyboardButton(
-#                                     text='да',
-#                                     callback_data='yes'
-# )
-#
-# no_button: InlineKeyboardButton  = InlineKeyboardButton(
-#                                     text='нет',
-#                                     callback_data='no'
-# )
-#
-# yes_no_menu_inl.row(yes_button, no_button)
+

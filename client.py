@@ -17,6 +17,8 @@ from typing import List
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
+user_dict: dict[int, dict[str | int]] = {}
+districts: list[str] = []
 
 payload_boilerplate = {
     'currency': 'UZS',
@@ -41,18 +43,14 @@ class FSMSelectParams(StatesGroup):
 
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
-# @dp.message(CommandStart(), StateFilter(default_state)) # new type of decorator
-async def command_start(message: types.Message, state: FSMContext): #not sure if state: FSMContext is used in the
-    # newer version of aiogram
+@dp.message(CommandStart(), StateFilter(default_state)) # new type of decorator
+async def command_start(message: types.Message, state: FSMContext):
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
     '''
     user_tg_id = message['from']['id']
-    async with state.proxy() as data:
-        data['user_id'] = message['from']['id']
-
-    # TODO: use REDIS instead of state.proxy()
+    # TODO: use REDIS instead of user_dict
     if db.verification(user_tg_id):
         search_params = eval(*db.fetch('search_params', user_tg_id))
         ru_params = convert_params(search_params)
@@ -62,68 +60,59 @@ async def command_start(message: types.Message, state: FSMContext): #not sure if
         await state.set_state(FSMSelectParams.resume_delivery)
 
     else:
-        async with state.proxy() as data:
-            data['user_id'] = message['from']['id']
         await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
                              'платить в месяц? Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
         # TODO: make kb for better UX
         await state.set_state(FSMSelectParams.price_from)
 
 
-# @dp.message(Command(commands=["cancel"]))
+@dp.message(Command(commands=["cancel"]), ~StateFilter(default_state))
 async def cancel_input(message: types.Message, state: FSMContext):
-    global the_payload
-    current_state = await state.get_state()
-    if current_state:
-        the_payload = {'currency': 'UZS', 'districts': []}
-        await message.answer('Чтобы заново ввести параметры, нажмите /start')
-        await state.finish()
-    else:
-        await message.answer('Вы пока ещё ничего не вводили. Прямо сейчас можете ввести минимальную цену')
-        await FSMSelectParams.price_from.set()
+    await message.answer('Вы прервали заполнение параметров.\n Чтобы снова перейти к заполнению параметров, введите /start')
+    await state.clear()
 
 
-# @dp.message()
+@dp.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
 async def process_price_from(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['search[filter_float_price:from]'] = message.text
+    await state.update_data(price_from=message.text)
     await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
                          'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')  # TODO: make kb for better UX
     await state.set_state(FSMSelectParams.price_to)
 
+# TODO: add handlers for not_price_from, not_ditrict etc
 
-# @dp.message()
+@dp.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
 async def process_price_to(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['search[filter_float_price:to]'] = message.text
-    # the_payload['search[filter_float_price:to]'] = message.text
+    await state.update_data(price_to=message.text)
     await message.answer('Выберите, пожалуйста, район.',  # TODO: how to pick several districts at once?
                          reply_markup=district_menu_inl)
     await state.set_state(FSMSelectParams.district)
 
 
-# @dp.message()
-async def process_district(callback: types.CallbackQuery, state: FSMContext):
-    async with state.proxy() as data:
-        print(callback)
-        data['districts'] = []
-        data['districts'].append(districts_dict[callback.data])
+@dp.callback_query(StateFilter(FSMSelectParams.district))
+async def gather_district(callback: types.CallbackQuery):
+    global districts
+    await districts.append(callback.data)
+    await callback.message.answer('После выбора всех интерсующих вас районов, нажмите "выбрать".')
 
-    await callback.message.answer('Спасибо ваши данные зарегстрированы. '
-                                  'Начать поиск и рассылку по вашему запросу?',
-                                  reply_markup=yes_no_menu_inl)
+
+@dp.callback_query(StateFilter(FSMSelectParams.district), Text(text=['finish']))
+async def process_district(callback: types.CallbackQuery, state: FSMContext):
+    global districts
+    await state.update_data(districts=districts)
+    user_dict[callback.from_user.id] = await state.get_data()
+    await callback.message.edit_text('Спасибо ваши данные зарегстрированы.')
+    await callback.message.answer('Начать рассылку', reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
 
 
-# @dp.message()
+@dp.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
-    print('Ща будем парсить')
-    await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
-
-    user_query = await state.get_data()
-    user_id = user_query.pop('user_id')
-    search_params = copy.deepcopy(user_query)
+    print('Поехали парсить')
+    user_id = callback.from_user.id
+    user_query = user_dict[user_id]
     search_districts = user_query.pop('districts')
+    search_params = copy.deepcopy(user_query)
     payload = payload_boilerplate | user_query
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
@@ -175,13 +164,15 @@ async def check_params(message: types.Message, state: FSMContext):
     ru_params = convert_params(search_params)
     await message.answer(ru_params)
 
+# TODO: add show_params
+# TODO: add I don't get ya
 
-def register_handlers(dp: Dispatcher):
-    dp.message.register(command_start, CommandStart(), StateFilter(default_state))
-    dp.message.register(cancel_input, Command(commands=['cancel']))
-    dp.message.register(process_price_from, StateFilter(FSMSelectParams.price_from), F.text.isdigit())
-    dp.message.register(process_price_to, StateFilter(FSMSelectParams.price_to), F.text.isdigit())
-    dp.callback_query.register(process_district, StateFilter(FSMSelectParams.district)) # TODO: add func with callback
-    dp.callback_query.register(parse_data, Text(text=['yes']), StateFilter(FSMSelectParams.start_parsing))
-    dp.callback_query.register(resume_delivery, Text(text=['yes']), StateFilter(FSMSelectParams.resume_delivery))
-    dp.message.register(check_params, Command(commands=['see_my_params']), StateFilter(FSMSelectParams.check_params))
+# def register_handlers(dp: Dispatcher):
+#     dp.message.register(command_start, CommandStart(), StateFilter(default_state))
+#     dp.message.register(cancel_input, Command(commands=['cancel']))
+#     dp.message.register(process_price_from, StateFilter(FSMSelectParams.price_from), F.text.isdigit())
+#     dp.message.register(process_price_to, StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+#     dp.callback_query.register(process_district, StateFilter(FSMSelectParams.district)) # TODO: add func with callback
+#     dp.callback_query.register(parse_data, Text(text=['yes']), StateFilter(FSMSelectParams.start_parsing))
+#     dp.callback_query.register(resume_delivery, Text(text=['yes']), StateFilter(FSMSelectParams.resume_delivery))
+#     dp.message.register(check_params, Command(commands=['see_my_params']), StateFilter(FSMSelectParams.check_params))
