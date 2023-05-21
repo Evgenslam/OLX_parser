@@ -1,13 +1,13 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from pprint import pprint
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-def create_inline_kb(row_width: int, **kwargs) -> InlineKeyboardMarkup:
-    inline_kb: InlineKeyboardMarkup = InlineKeyboardMarkup(row_width=row_width)
-    [inline_kb.insert(InlineKeyboardButton(
-                      text=text,
-                      callback_data=button))
-                      for button, text in kwargs.items()]
-    return inline_kb
+def create_inline_kb(row_width: int, **kwargs: str) -> InlineKeyboardMarkup:
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons = [InlineKeyboardButton(text=text, callback_data=button)
+                          for button, text in kwargs.items()]
+    kb_builder.row(*buttons, width=row_width)
+    return kb_builder.as_markup()
+
 
 districts =['Мирзо-Улугбекский', 'Сергелийский', 'Яшнабадский', 'Чиланзарский', 'Мирабадский', 'Юнусабадский',
               'Алмазарский', 'Яккасарайский', 'Шайхантахурский']
@@ -45,5 +45,5 @@ district_menu_inl = create_inline_kb(2, **districts_dict)
 yes_no_menu_inl = create_inline_kb(2, **yes_no_dict)
 resume_alter_menu_inl = create_inline_kb(2, **resume_alter_dict)
 
-
+print(district_menu_inl)
 

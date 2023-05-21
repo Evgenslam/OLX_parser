@@ -17,8 +17,10 @@ url for further parsing and sending the info back to the user. More parameters a
 def main():
     async def on_startup(_):
         print('Бот недвига вышел в онлайн')
-    register_handlers(dp)
-    dp.run_polling(bot)
+
+        dp.include_router(client) #????
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
