@@ -14,18 +14,17 @@ from decouple import config
 from loader import db, dp
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
+from pprint import pprint
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 user_dict: dict[int, dict[str | int]] = {}
-districts: list[str] = []
+#districts: list[str] = []
 
 payload_boilerplate = {
     'currency': 'UZS',
     'districts': [],
 }
-
-router: Router = Router()
 
 class FSMSelectParams(StatesGroup):
     price_from = State()
@@ -42,16 +41,19 @@ class FSMSelectParams(StatesGroup):
     change_params = State()
     stop_delivery = State()
 
+router: Router = Router()
+router_district: Router = Router()
+
+router_district.callback_query.filter(StateFilter(FSMSelectParams.district))
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
-@router.message(CommandStart(), StateFilter(default_state)) # new type of decorator
+@router.message(CommandStart())  # new type of decorator , #StateFilter(default_state
 async def command_start(message: types.Message, state: FSMContext):
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
     '''
-    user_tg_id = message['from']['id']
-    # TODO: use REDIS instead of user_dict
+    user_tg_id = message.from_user.id
     if db.verification(user_tg_id):
         search_params = eval(*db.fetch('search_params', user_tg_id))
         ru_params = convert_params(search_params)
@@ -82,31 +84,38 @@ async def process_price_from(message: types.Message, state: FSMContext):
 
 # TODO: add handlers for not_price_from, not_ditrict etc
 
+
 @router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
 async def process_price_to(message: types.Message, state: FSMContext):
     await state.update_data(price_to=message.text)
-    await message.answer('Выберите, пожалуйста, район.',  # TODO: how to pick several districts at once?
+    await state.update_data(districts=[])
+    await message.answer('Выберите, пожалуйста, район. После выбора всех интерсующих вас районов, нажмите "выбрать".',
                          reply_markup=district_menu_inl)
+    # TODO: how to pick several districts at once?
     await state.set_state(FSMSelectParams.district)
 
 
-@router.callback_query(StateFilter(FSMSelectParams.district))
-async def gather_district(callback: types.CallbackQuery):
-    global districts
+@router.callback_query(StateFilter(FSMSelectParams.district), F.data != 'finish') #, ~F.text == 'выбрать'
+async def gather_district(callback: types.CallbackQuery, state: FSMContext):
+    pprint(callback)
+    data = await state.get_data()
+    districts = data['districts']
     districts.append(callback.data)
-    await callback.message.answer('После выбора всех интерсующих вас районов, нажмите "выбрать".')
-
-
-@router.callback_query(StateFilter(FSMSelectParams.district), Text(text=['finish']))
-async def process_district(callback: types.CallbackQuery, state: FSMContext):
-    global districts
     await state.update_data(districts=districts)
+    print(await state.get_data())
+
+# TODO: if user presses 'выбрать' right away make a warning: 'Для начала выберите хотя бы один район'
+
+
+@router.callback_query(StateFilter(FSMSelectParams.district), F.data == 'finish')
+async def process_district(callback: types.CallbackQuery, state: FSMContext):
     user_dict[callback.from_user.id] = await state.get_data()
+    print(user_dict)
     await callback.message.edit_text('Спасибо ваши данные зарегстрированы.')
     await callback.message.answer('Начать рассылку', reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
 
-
+# TODO: check parsing func
 @router.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')

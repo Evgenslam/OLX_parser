@@ -45,5 +45,4 @@ district_menu_inl = create_inline_kb(2, **districts_dict)
 yes_no_menu_inl = create_inline_kb(2, **yes_no_dict)
 resume_alter_menu_inl = create_inline_kb(2, **resume_alter_dict)
 
-print(district_menu_inl)
 

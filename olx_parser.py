@@ -1,5 +1,5 @@
 import asyncio
-from client import router
+from client import router, router_district
 from loader import dp, bot
 
 '''
@@ -18,6 +18,7 @@ url for further parsing and sending the info back to the user. More parameters a
 async def main():
     print('Бот недвига вышел в онлайн')
     dp.include_router(router)
+    dp.include_router(router_district)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
