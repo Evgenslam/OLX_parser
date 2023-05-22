@@ -1,4 +1,5 @@
-from client import register_handlers
+import asyncio
+from client import router
 from loader import dp, bot
 
 '''
@@ -14,17 +15,15 @@ url for further parsing and sending the info back to the user. More parameters a
 #                    description='Изменить параметры поиска')]
 #         await bot.set_my_commands(main_menu_commands)
 
-def main():
-    async def on_startup(_):
-        print('Бот недвига вышел в онлайн')
-
-        dp.include_router(client) #????
-        await bot.delete_webhook(drop_pending_updates=True)
-        await dp.start_polling(bot)
+async def main():
+    print('Бот недвига вышел в онлайн')
+    dp.include_router(router)
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 
 
 

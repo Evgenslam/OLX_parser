@@ -3,7 +3,7 @@ import copy
 from random import randint
 
 import requests
-from aiogram import types, Dispatcher, F
+from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandStart, Text, StateFilter
 from aiogram.filters.state import StatesGroup, State
@@ -25,6 +25,7 @@ payload_boilerplate = {
     'districts': [],
 }
 
+router: Router = Router()
 
 class FSMSelectParams(StatesGroup):
     price_from = State()
@@ -43,7 +44,7 @@ class FSMSelectParams(StatesGroup):
 
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
-@dp.message(CommandStart(), StateFilter(default_state)) # new type of decorator
+@router.message(CommandStart(), StateFilter(default_state)) # new type of decorator
 async def command_start(message: types.Message, state: FSMContext):
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
@@ -66,13 +67,13 @@ async def command_start(message: types.Message, state: FSMContext):
         await state.set_state(FSMSelectParams.price_from)
 
 
-@dp.message(Command(commands=["cancel"]), ~StateFilter(default_state))
+@router.message(Command(commands=["cancel"]), ~StateFilter(default_state))
 async def cancel_input(message: types.Message, state: FSMContext):
     await message.answer('Вы прервали заполнение параметров.\n Чтобы снова перейти к заполнению параметров, введите /start')
     await state.clear()
 
 
-@dp.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
+@router.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
 async def process_price_from(message: types.Message, state: FSMContext):
     await state.update_data(price_from=message.text)
     await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
@@ -81,7 +82,7 @@ async def process_price_from(message: types.Message, state: FSMContext):
 
 # TODO: add handlers for not_price_from, not_ditrict etc
 
-@dp.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+@router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
 async def process_price_to(message: types.Message, state: FSMContext):
     await state.update_data(price_to=message.text)
     await message.answer('Выберите, пожалуйста, район.',  # TODO: how to pick several districts at once?
@@ -89,14 +90,14 @@ async def process_price_to(message: types.Message, state: FSMContext):
     await state.set_state(FSMSelectParams.district)
 
 
-@dp.callback_query(StateFilter(FSMSelectParams.district))
+@router.callback_query(StateFilter(FSMSelectParams.district))
 async def gather_district(callback: types.CallbackQuery):
     global districts
     districts.append(callback.data)
     await callback.message.answer('После выбора всех интерсующих вас районов, нажмите "выбрать".')
 
 
-@dp.callback_query(StateFilter(FSMSelectParams.district), Text(text=['finish']))
+@router.callback_query(StateFilter(FSMSelectParams.district), Text(text=['finish']))
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     global districts
     await state.update_data(districts=districts)
@@ -106,7 +107,7 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(FSMSelectParams.start_parsing)
 
 
-@dp.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
+@router.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
     user_id = callback.from_user.id
@@ -132,7 +133,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                     # TODO: add sent or not field, add field with generated link
         await asyncio.sleep(randint(30, 40))
 
-# @dp.message()
+# @router.message()
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     print('Возобновляем рассылку.')
     await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
