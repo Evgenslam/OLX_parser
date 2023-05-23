@@ -19,11 +19,9 @@ from pprint import pprint
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
 user_dict: dict[int, dict[str | int]] = {}
-#districts: list[str] = []
 
 payload_boilerplate = {
     'currency': 'UZS',
-    'districts': [],
 }
 
 class FSMSelectParams(StatesGroup):
@@ -77,7 +75,8 @@ async def cancel_input(message: types.Message, state: FSMContext):
 
 @router.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
 async def process_price_from(message: types.Message, state: FSMContext):
-    await state.update_data(price_from=message.text)
+    state_data = {'search[filter_float_price:from]': message.text}
+    await state.update_data(state_data)
     await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
                          'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')  # TODO: make kb for better UX
     await state.set_state(FSMSelectParams.price_to)
@@ -87,7 +86,8 @@ async def process_price_from(message: types.Message, state: FSMContext):
 
 @router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
 async def process_price_to(message: types.Message, state: FSMContext):
-    await state.update_data(price_to=message.text)
+    state_data = {'search[filter_float_price:to]': message.text}
+    await state.update_data(state_data)
     await state.update_data(districts=[])
     await message.answer('Выберите, пожалуйста, район. После выбора всех интерсующих вас районов, нажмите "выбрать".',
                          reply_markup=district_menu_inl)
@@ -105,6 +105,7 @@ async def gather_district(callback: types.CallbackQuery, state: FSMContext):
     print(await state.get_data())
 
 # TODO: if user presses 'выбрать' right away make a warning: 'Для начала выберите хотя бы один район'
+# TODO: return common router
 
 
 @router.callback_query(StateFilter(FSMSelectParams.district), F.data == 'finish')
@@ -123,15 +124,19 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     user_query = user_dict[user_id]
     search_districts = user_query.pop('districts')
     search_params = copy.deepcopy(user_query)
-    payload = payload_boilerplate | user_query
+    payload = user_query | payload_boilerplate
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
 
     while await state.get_state() == 'FSMSelectParams:start_parsing':  # TODO: check if it has to be :start_parsing or .start_parsing
+        print('парсинг начался')
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
+        print(len(cards))
         for card in cards:
+            print(card)
             if not db.is_in_db(card):
                 offer = get_offer(card, search_districts)
+                print(offer)
                 if offer:
                     offer['user_id'] = user_id
                     offer['search_link'] = search_link

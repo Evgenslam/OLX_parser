@@ -32,6 +32,9 @@ districts_eng = ['Mirzo-Ulugbekskii', 'Sergeliiskii', 'Yashnabadskii', 'Chilanza
 # search%5Bfilter_float_total_area:to%5D=150&
 # currency=UZS
 
+
+#https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/?currency=UZS&price_from=1000000&price_to
+# =5000000
 district_ids = [12, 19, 22, 23, 13, 25, 20, 26, 24]
 
 districts_dict = dict(zip(districts_eng, districts))
@@ -46,3 +49,16 @@ yes_no_menu_inl = create_inline_kb(2, **yes_no_dict)
 resume_alter_menu_inl = create_inline_kb(2, **resume_alter_dict)
 
 
+# ?search[district_id]=18&: This parameter indicates the district ID to search for, and its value is 18.
+# search[filter_float_price:from]=5000&: This parameter represents the minimum price range, and its value is 5000.
+# search[filter_float_price:to]=60000&: This parameter represents the maximum price range, and its value is 60000.
+# search[filter_float_number_of_rooms:from]=3&: This parameter represents the minimum number of rooms, and its value is 3.
+# search[filter_float_number_of_rooms:to]=5&: This parameter represents the maximum number of rooms, and its value is 5.
+# search[filter_float_floor:from]=1&: This parameter represents the minimum floor number, and its value is 1.
+# search[filter_float_floor:to]=7&: This parameter represents the maximum floor number, and its value is 7.
+# search[filter_float_total_floors:from]=1&: This parameter represents the minimum total number of floors, and its value is 1.
+# search[filter_float_total_floors:to]=16&: This parameter represents the maximum total number of floors, and its value is 16.
+# search[filter_enum_furnished][0]=yes&: This parameter indicates whether the property is furnished, and its value is yes.
+# search[filter_enum_comission][0]=no&: This parameter indicates whether a commission is applicable, and its value is no.
+# search[filter_float_total_area:from]=20&: This parameter represents the minimum total area, and its value is 20.
+# search[filter_float_total_area:to]=150&: This parameter represents the maximum total area, and its value is 150.
