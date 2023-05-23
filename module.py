@@ -45,7 +45,7 @@ def get_offer(card: str, search_districts: List[str]) -> Dict[str, str]:
     """
     offer: dict = {}
     loctime = card.find('p', {'data-testid': 'location-date'}).text
-    district = loctime.split(' - ')[0].split()[1]  # TODO: district check may be moved to db.is_in_db
+    district = loctime.split(' - ')[0].split(',')[1][:-6].lstrip()    # TODO: ugly as fuck, rewrite plz
     current_date = str(datetime.now().date())
     if not search_districts or district in search_districts:
         offer["название"] = card.find('h6').text
@@ -53,7 +53,7 @@ def get_offer(card: str, search_districts: List[str]) -> Dict[str, str]:
         offer["район"] = district
         offer["время_публикации"] = loctime.split(' - ')[1].replace('Сегодня', current_date)
         offer["ссылка"] = 'https://www.olx.uz/' + card.find('a')['href'] # TODO: make a shorter link
-        return offer
+    return offer
 
 
 def format_text(offer: Dict[str, str]) -> str:

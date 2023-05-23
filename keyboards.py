@@ -62,3 +62,9 @@ resume_alter_menu_inl = create_inline_kb(2, **resume_alter_dict)
 # search[filter_enum_comission][0]=no&: This parameter indicates whether a commission is applicable, and its value is no.
 # search[filter_float_total_area:from]=20&: This parameter represents the minimum total area, and its value is 20.
 # search[filter_float_total_area:to]=150&: This parameter represents the maximum total area, and its value is 150.
+
+
+theirlink = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/?currency=UZS&search\%5Bfilter_float_price:from%5D=1000000&search%5Bfilter_float_price:to%5D=5000000'
+mylink = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/?currency=UZS&search%5Bfilter_float_price%3Afrom%5D=1000000&search%5Bfilter_float_price%3Ato%5D=5000000'
+
+#print(theirlink == mylink)

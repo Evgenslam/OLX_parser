@@ -97,12 +97,11 @@ async def process_price_to(message: types.Message, state: FSMContext):
 
 @router.callback_query(StateFilter(FSMSelectParams.district), F.data != 'finish') #, ~F.text == 'выбрать'
 async def gather_district(callback: types.CallbackQuery, state: FSMContext):
-    pprint(callback)
     data = await state.get_data()
     districts = data['districts']
     districts.append(callback.data)
     await state.update_data(districts=districts)
-    print(await state.get_data())
+
 
 # TODO: if user presses 'выбрать' right away make a warning: 'Для начала выберите хотя бы один район'
 # TODO: return common router
@@ -122,21 +121,19 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
     user_id = callback.from_user.id
     user_query = user_dict[user_id]
-    search_districts = user_query.pop('districts')
+    search_districts = [districts_dict[x] for x in user_query.pop('districts')]
+    print(search_districts)
     search_params = copy.deepcopy(user_query)
-    payload = user_query | payload_boilerplate
+    payload = payload_boilerplate | user_query
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
 
     while await state.get_state() == 'FSMSelectParams:start_parsing':  # TODO: check if it has to be :start_parsing or .start_parsing
         print('парсинг начался')
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
-        print(len(cards))
         for card in cards:
-            print(card)
             if not db.is_in_db(card):
                 offer = get_offer(card, search_districts)
-                print(offer)
                 if offer:
                     offer['user_id'] = user_id
                     offer['search_link'] = search_link
