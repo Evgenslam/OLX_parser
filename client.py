@@ -111,8 +111,8 @@ async def gather_district(callback: types.CallbackQuery, state: FSMContext):
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     user_dict[callback.from_user.id] = await state.get_data()
     print(user_dict)
-    await callback.message.edit_text('Спасибо ваши данные зарегстрированы.')
-    await callback.message.answer('Начать рассылку', reply_markup=yes_no_menu_inl)
+    await callback.message.edit_text('Спасибо ваши данные зарегистрированы.\nНачать рассылку?',
+                                     reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
 
 # TODO: check parsing func
