@@ -14,10 +14,11 @@ from decouple import config
 from loader import db, dp
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
+from lexicon_ru import LEXICON_RU
 from pprint import pprint
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
-tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))
+tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))  # TODO: why 2 bots?
 user_dict: dict[int, dict[str | int]] = {}
 
 payload_boilerplate = {
@@ -61,15 +62,14 @@ async def command_start(message: types.Message, state: FSMContext):
         await state.set_state(FSMSelectParams.resume_delivery)
 
     else:
-        await message.answer('Для начала расскажите, какая квартира вас интересует. Какую минимальную цену вы готовы '
-                             'платить в месяц? Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')
+        await message.answer(LEXICON_RU['ask_min_price'])
         # TODO: make kb for better UX
         await state.set_state(FSMSelectParams.price_from)
 
 
 @router.message(Command(commands=["cancel"]), ~StateFilter(default_state))
 async def cancel_input(message: types.Message, state: FSMContext):
-    await message.answer('Вы прервали заполнение параметров.\n Чтобы снова перейти к заполнению параметров, введите /start')
+    await message.answer(LEXICON_RU['/cancel'])
     await state.clear()
 
 
@@ -77,8 +77,7 @@ async def cancel_input(message: types.Message, state: FSMContext):
 async def process_price_from(message: types.Message, state: FSMContext):
     state_data = {'search[filter_float_price:from]': message.text}
     await state.update_data(state_data)
-    await message.answer('Какую максимальную цену в сумах вы готовы платить в месяц? '
-                         'Для справки: 1 000 000 сум - это чуть меньше 100 долларов.')  # TODO: make kb for better UX
+    await message.answer(text=LEXICON_RU['ask_max_price'])  # TODO: make kb for better UX
     await state.set_state(FSMSelectParams.price_to)
 
 # TODO: add handlers for not_price_from, not_ditrict etc
@@ -89,7 +88,7 @@ async def process_price_to(message: types.Message, state: FSMContext):
     state_data = {'search[filter_float_price:to]': message.text}
     await state.update_data(state_data)
     await state.update_data(districts=[])
-    await message.answer('Выберите, пожалуйста, район. После выбора всех интерсующих вас районов, нажмите "выбрать".',
+    await message.answer(text=LEXICON_RU['ask_district'],
                          reply_markup=district_menu_inl)
     # TODO: how to pick several districts at once?
     await state.set_state(FSMSelectParams.district)
@@ -111,7 +110,7 @@ async def gather_district(callback: types.CallbackQuery, state: FSMContext):
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     user_dict[callback.from_user.id] = await state.get_data()
     print(user_dict)
-    await callback.message.edit_text('Спасибо ваши данные зарегистрированы.\nНачать рассылку?',
+    await callback.message.edit_text(text=LEXICON_RU['ask_to_start_parsing'],
                                      reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
 
@@ -147,7 +146,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
 # @router.message()
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     print('Возобновляем рассылку.')
-    await callback.message.answer('Как только появится подходящее объявление, мы сразу кинем ссылку на него сюда.')
+    await callback.message.answer(text=LEXICON_RU['/resume'])
     user_id = callback.message['chat']['id']
     search_link = db.fetch('search_link', user_id)[0]
 
@@ -179,7 +178,6 @@ async def check_params(message: types.Message, state: FSMContext):
 # TODO: add show_params
 # TODO: add I don't get ya
 # TODO: for biggie functions logic should be transfered to the module file
-# TODO: implement LEXICON
 
 
 # def register_handlers(dp: Dispatcher):

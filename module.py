@@ -33,6 +33,7 @@ def get_cards(url: str) -> List[str]:
         soup = BeautifulSoup(response.text, 'lxml')
         cards = [x for x in soup.find_all('div', {"data-cy": "l-card"}) if
                  'ТОП' not in x.text]
+        print(len(cards))
     except requests.exceptions.Timeout:
         print("Timeout occurred")
         print(f'Жопа наступила в {time.ctime(time.time())}')

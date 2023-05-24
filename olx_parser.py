@@ -8,7 +8,7 @@ from database import Database
 '''
 This version utilizes aiogram. 
 In the current version  of the script the parameters are obtained via Telegram chat from the user to generate a 
-url for further parsing and sending the info back to the user. More parameters are added in feature branch.
+url for further parsing and sending the info back to the user. More parameters are to be added.
 '''
 # async def set_main_menu(bot):
 #     main_menu_commands = [
