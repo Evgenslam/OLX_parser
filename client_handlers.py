@@ -178,6 +178,9 @@ async def check_params(message: types.Message, state: FSMContext):
 
 # TODO: add show_params
 # TODO: add I don't get ya
+# TODO: for biggie functions logic should be transfered to the module file
+# TODO: implement LEXICON
+
 
 # def register_handlers(dp: Dispatcher):
 #     dp.message.register(command_start, CommandStart(), StateFilter(default_state))

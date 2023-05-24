@@ -1,6 +1,9 @@
 import asyncio
-from client import router, router_district
-from loader import dp, bot
+from config import load_config
+from aiogram.fsm.storage.redis import RedisStorage, Redis
+from client_handlers import router, router_district
+from aiogram import Bot, Dispatcher
+from database import Database
 
 '''
 This version utilizes aiogram. 
@@ -17,8 +20,18 @@ url for further parsing and sending the info back to the user. More parameters a
 
 async def main():
     print('Бот недвига вышел в онлайн')
+
+    config = load_config(None)
+    bot: Bot = Bot(token=config.tg_bot.token)
+    redis: Redis = Redis(host='localhost')
+    storage: RedisStorage = RedisStorage(redis=redis)
+    dp: Dispatcher = Dispatcher(storage=storage)
+    db = Database(db_path='DB/realty5.db')
+
+    db.del_db_content()
     dp.include_router(router)
     dp.include_router(router_district)
+
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
