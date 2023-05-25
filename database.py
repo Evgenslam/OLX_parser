@@ -10,7 +10,7 @@ class Database:
 
     # TODO: make Database funcs async
 
-    def verification(self, user_id):
+    def user_is_in_db(self, user_id):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(f'SELECT user_id FROM offers WHERE user_id={user_id}')
@@ -18,7 +18,7 @@ class Database:
             result = cursor.fetchone()
             return result
 
-    def is_in_db(self, card: str):
+    def ad_is_in_db(self, card: str):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             title = card.find('h6').text

@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandStart, Text, StateFilter
 from aiogram.filters.state import StatesGroup, State
 from aiogram.fsm.state import default_state
-from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict, resume_alter_menu_inl
+from keyboards import yes_no_menu_inl, district_menu_inl, resume_alter_menu_inl
 from telegram import Telegram
 from decouple import config
 from loader import db
@@ -18,7 +18,7 @@ from lexicon_ru import LEXICON_RU
 from pprint import pprint
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
-tg = Telegram(bot_token=config('bot_token'), chat_id=config('chat_id'))  # TODO: why 2 bots?
+tg = Telegram(bot_token=config('BOT_TOKEN'), chat_id=config('CHAT_ID'))  # TODO: why 2 bots?
 user_dict: dict[int, dict[str | int]] = {}
 
 payload_boilerplate = {
@@ -41,7 +41,7 @@ class FSMSelectParams(StatesGroup):
     stop_delivery = State()
 
 router: Router = Router()
-router_district: Router = Router()
+router_district: Router = Router() # TODO: use router_district
 
 router_district.callback_query.filter(StateFilter(FSMSelectParams.district))
 
@@ -53,7 +53,7 @@ async def command_start(message: types.Message, state: FSMContext):
     FMS to price_to.
     '''
     user_tg_id = message.from_user.id
-    if db.verification(user_tg_id):
+    if db.user_is_in_db(user_tg_id):
         search_params = eval(*db.fetch('search_params', user_tg_id))
         ru_params = convert_params(search_params)
         await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: \n\n{ru_params}\n\n Посмотреть параметры '
@@ -120,9 +120,9 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
     user_id = callback.from_user.id
     user_query = user_dict[user_id]
-    search_districts = [districts_dict[x] for x in user_query.pop('districts')]
-    print(search_districts)
     search_params = copy.deepcopy(user_query)
+    search_districts = [LEXICON_RU[x] for x in user_query.pop('districts')]
+    print(search_districts)
     payload = payload_boilerplate | user_query
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
@@ -131,7 +131,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
         print('парсинг начался')
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
         for card in cards:
-            if not db.is_in_db(card):
+            if not db.ad_is_in_db(card):
                 offer = get_offer(card, search_districts)
                 if offer:
                     offer['user_id'] = user_id
@@ -153,7 +153,7 @@ async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     while await state.get_state() == 'FSMSelectParams:resume_delivery':  # TODO: add a state to be able to finish
         cards: List[str] = get_cards(url=search_link)
         for card in cards:
-            if not db.is_in_db(card):
+            if not db.ad_is_in_db(card):
                 search_params = eval(*db.fetch('search_params', user_id))
                 search_districts = search_params['districts']
                 offer = get_offer(card, search_districts)

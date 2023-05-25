@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, List
 from bs4 import BeautifulSoup
 from decouple import config
+from lexicon_ru import LEXICON_RU
 
 # for using fake useragent
 # ua = fake_useragent.UserAgent(verify_ssl=False)  # с фейковым юзерагентом почему-то не работает
@@ -70,46 +71,14 @@ def format_text(offer: Dict[str, str]) -> str:
     return text
 
 
-def send_telegram(offer: Dict[str, str]) -> None:
-    text: str = format_text(offer)
-    url: str = f"https://api.telegram.org/bot{config('bot_token')}/sendMessage"
-    data: dict = dict(chat_id=config('chat_id'), text=text, parse_mode='HTML')
-    response = requests.post(url=url, data=data)
-    print(response)
-
-
-def check_database(card: str) -> None:
-    '''
-    This function checks if the ad is already in the DB. If it is not, a)sends in to Telegram b)adds it to the DB
-    c)makes necessary prints
-    '''
-    title: str = card.find('h6').text
-    with sqlite3.connect('DB/realty4.db') as connection:
-        cursor = connection.cursor()
-        cursor.execute('''
-            SELECT title FROM offers WHERE title = (?)
-        ''', (title,))
-        result = cursor.fetchone()
-        if result is None:
-            offer = get_offer(card)
-            send_telegram(offer)
-            cursor.execute('''
-                INSERT INTO offers
-                VALUES(NULL, :title, :price, :district, :time, :lnk)
-            ''', offer)
-            connection.commit()
-            print(f'●Объявление ---{title}--- добавлено в базу данных')
-            print(f'Время добавления в базу данных: {time.ctime(time.time())}')
-            print(f'Время с начала запуска скрипта: {time.time() - start_time}')
-
-
 def convert_params(params: dict) -> str:
     trans_dict = {
         'минимальная цена': 'search[filter_float_price:from]',
         'максимальная цена': 'search[filter_float_price:to]',
         'районы': 'districts'
-    }
+    } # TODO: move the trans_dict into a separate LEXICON file
     ru_params = {ru_param: params.get(trans_dict[ru_param]) for ru_param in trans_dict}
+    ru_params['районы'] = ', '.join([LEXICON_RU[district] for district in ru_params['районы']])
     ru_params_dict = [f'{key} : {val}' for key, val in ru_params.items()]
     ru_params_str = '\n'.join(ru_params_dict)
     return ru_params_str
