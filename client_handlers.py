@@ -119,6 +119,7 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
     user_id = callback.from_user.id
+    print(callback.message.chat.id)
     user_query = user_dict[user_id]
     search_params = copy.deepcopy(user_query)
     search_districts = [LEXICON_RU[x] for x in user_query.pop('districts')]
@@ -139,7 +140,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                     offer['параметры_поиска'] = str(search_params)
                     text = format_text(offer)
                     db.send_to_db(offer)  # TODO: поменять chat id на динамический, вытаскивать из message
-                    tg.send_telegram(text)  # TODO: Filter by number. Change tg to send_message
+                    await callback.message.answer(text=text)
                     # TODO: add sent or not field, add field with generated link
         await asyncio.sleep(randint(30, 40))
 

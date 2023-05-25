@@ -11,4 +11,4 @@ from database import Database
 # bot: Bot = Bot(token=env('BOT_TOKEN'))
 # dp: Dispatcher = Dispatcher(storage=storage)
 db = Database(db_path='DB/realty5.db')
-#db.del_db_content()
+db.del_db_content()
