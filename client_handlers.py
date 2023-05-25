@@ -11,7 +11,7 @@ from aiogram.fsm.state import default_state
 from keyboards import yes_no_menu_inl, district_menu_inl, districts_dict, resume_alter_menu_inl
 from telegram import Telegram
 from decouple import config
-from loader import db, dp
+from loader import db
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
 from lexicon_ru import LEXICON_RU

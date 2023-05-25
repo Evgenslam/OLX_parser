@@ -3,7 +3,6 @@ from config import load_config
 from aiogram.fsm.storage.redis import RedisStorage, Redis
 from client_handlers import router, router_district
 from aiogram import Bot, Dispatcher
-from database import Database
 
 '''
 This version utilizes aiogram. 
@@ -26,9 +25,6 @@ async def main():
     redis: Redis = Redis(host='localhost')
     storage: RedisStorage = RedisStorage(redis=redis)
     dp: Dispatcher = Dispatcher(storage=storage)
-    db = Database(db_path='DB/realty5.db')
-
-    db.del_db_content()
     dp.include_router(router)
     dp.include_router(router_district)
 
