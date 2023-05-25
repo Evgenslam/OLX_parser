@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandStart, Text, StateFilter
 from aiogram.filters.state import StatesGroup, State
 from aiogram.fsm.state import default_state
-from keyboards import yes_no_menu_inl, district_menu_inl, resume_alter_menu_inl
+from keyboards import yes_no_menu_inl, district_menu_inl, resume_alter_menu_inl, price_menu_inl
 from telegram import Telegram
 from decouple import config
 from loader import db
@@ -62,7 +62,8 @@ async def command_start(message: types.Message, state: FSMContext):
         await state.set_state(FSMSelectParams.resume_delivery)
 
     else:
-        await message.answer(LEXICON_RU['ask_min_price'])
+        await message.answer(LEXICON_RU['ask_min_price'],
+                             reply_markup=price_menu_inl)
         # TODO: make kb for better UX
         await state.set_state(FSMSelectParams.price_from)
 
@@ -73,17 +74,19 @@ async def cancel_input(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
-async def process_price_from(message: types.Message, state: FSMContext):
+@router.message(StateFilter(FSMSelectParams.price_from), F.data.isdigit())
+async def process_price_from(message: types.Message, state: FSMContext):  # TODO: change handlers and filters to
+    # callback
     state_data = {'search[filter_float_price:from]': message.text}
     await state.update_data(state_data)
-    await message.answer(text=LEXICON_RU['ask_max_price'])  # TODO: make kb for better UX
+    await message.answer(text=LEXICON_RU['ask_max_price'],
+                         reply_markup=price_menu_inl)
     await state.set_state(FSMSelectParams.price_to)
 
 # TODO: add handlers for not_price_from, not_ditrict etc
 
 
-@router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+@router.message(StateFilter(FSMSelectParams.price_to), F.data.isdigit())
 async def process_price_to(message: types.Message, state: FSMContext):
     state_data = {'search[filter_float_price:to]': message.text}
     await state.update_data(state_data)
