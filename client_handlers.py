@@ -63,7 +63,6 @@ async def command_start(message: types.Message, state: FSMContext):
     else:
         await message.answer(LEXICON_RU['ask_min_price'],
                              reply_markup=price_menu_inl)
-        # TODO: make kb for better UX
         await state.set_state(FSMSelectParams.price_from)
 
 
@@ -138,7 +137,7 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
                                      reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
 
-# TODO: check parsing func
+
 @router.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
@@ -152,7 +151,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
 
-    while await state.get_state() == 'FSMSelectParams:start_parsing':  # TODO: check if it has to be :start_parsing or .start_parsing
+    while await state.get_state() == 'FSMSelectParams:start_parsing':
         print('парсинг начался')
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
         for card in cards:
@@ -163,7 +162,7 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                     offer['search_link'] = search_link
                     offer['параметры_поиска'] = str(search_params)
                     text = format_text(offer)
-                    db.send_to_db(offer)  # TODO: поменять chat id на динамический, вытаскивать из message
+                    db.send_to_db(offer)
                     await callback.message.answer(text=text)
                     # TODO: add sent or not field, add field with generated link
         await asyncio.sleep(randint(30, 40))
@@ -175,7 +174,7 @@ async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.message['chat']['id']
     search_link = db.fetch('search_link', user_id)[0]
 
-    while await state.get_state() == 'FSMSelectParams:resume_delivery':  # TODO: add a state to be able to finish
+    while await state.get_state() == 'FSMSelectParams:resume_delivery':
         cards: List[str] = get_cards(url=search_link)
         for card in cards:
             if not db.ad_is_in_db(card):
@@ -187,8 +186,8 @@ async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
                     offer['search_link'] = search_link
                     offer['параметры_поиска'] = str(search_params)  # TODO: translate into Russian
                     text = format_text(offer)
-                    db.send_to_db(offer)  # TODO: поменять chat id на динамический, вытаскивать из message
-                    tg.send_telegram(text)  # TODO: Filter by number. Change tg to send_message
+                    db.send_to_db(offer)
+                    tg.send_telegram(text)
                     # TODO: add sent or not field, add field with generated link
 
         await asyncio.sleep(randint(30, 40))
@@ -205,12 +204,4 @@ async def check_params(message: types.Message, state: FSMContext):
 # TODO: for biggie functions logic should be transfered to the module file
 
 
-# def register_handlers(dp: Dispatcher):
-#     dp.message.register(command_start, CommandStart(), StateFilter(default_state))
-#     dp.message.register(cancel_input, Command(commands=['cancel']))
-#     dp.message.register(process_price_from, StateFilter(FSMSelectParams.price_from), F.text.isdigit())
-#     dp.message.register(process_price_to, StateFilter(FSMSelectParams.price_to), F.text.isdigit())
-#     dp.callback_query.register(process_district, StateFilter(FSMSelectParams.district)) # TODO: add func with callback
-#     dp.callback_query.register(parse_data, Text(text=['yes']), StateFilter(FSMSelectParams.start_parsing))
-#     dp.callback_query.register(resume_delivery, Text(text=['yes']), StateFilter(FSMSelectParams.resume_delivery))
-#     dp.message.register(check_params, Command(commands=['see_my_params']), StateFilter(FSMSelectParams.check_params))
+
