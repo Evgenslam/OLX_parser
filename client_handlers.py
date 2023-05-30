@@ -15,11 +15,13 @@ from loader import db
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
 from lexicon_ru import LEXICON_RU
+from filters import SmallerThan
 from pprint import pprint
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
 tg = Telegram(bot_token=config('BOT_TOKEN'), chat_id=config('CHAT_ID'))  # TODO: why 2 bots?
 user_dict: dict[int, dict[str | int]] = {}
+min_price = 0
 
 payload_boilerplate = {
     'currency': 'UZS',
@@ -83,6 +85,7 @@ async def cancel_input(message: types.Message, state: FSMContext):
 
 @router_price_from.callback_query(F.data.isdigit())
 async def process_menu_price_from(callback: types.CallbackQuery, state: FSMContext):
+    global min_price
     min_price = int(callback.data)
     state_data = {'search[filter_float_price:from]': min_price}
     print(state_data)
@@ -94,6 +97,7 @@ async def process_menu_price_from(callback: types.CallbackQuery, state: FSMConte
 
 @router_price_from.message(F.text.isdigit())
 async def process_message_price_from(message: types.Message, state: FSMContext):
+    global min_price
     min_price = int(message.text)
     state_data = {'search[filter_float_price:from]': min_price * 11420}
     print(state_data)
@@ -104,13 +108,20 @@ async def process_message_price_from(message: types.Message, state: FSMContext):
 # TODO: add handlers for not_price_from, not_ditrict etc
 
 
+@router_price_to.callback_query(F.data.isdigit(), lambda callback: int(callback.data) < min_price)
+async def process_smaller_than_min_price(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(text=LEXICON_RU['less_than_min_price']) # TODO: make a pop-up window
+    await callback.message.answer(text=LEXICON_RU['ask_max_price'],
+                                  reply_markup=price_menu_inl)
+
+
 @router_price_to.callback_query(F.data.isdigit())
 async def process_menu_price_to(callback: types.CallbackQuery, state: FSMContext):
     max_price = int(callback.data)
     state_data = {'search[filter_float_price:to]': max_price}
     await state.update_data(state_data)
     await state.update_data(districts=[])
-    await callback.message.answer(text=f'Вы выбрали {int(max_price/11420)} $\n' +LEXICON_RU['ask_district'],
+    await callback.message.answer(text=f'Вы выбрали {int(max_price/11420)} $\n' + LEXICON_RU['ask_district'],
                                   reply_markup=district_menu_inl)
     await state.set_state(FSMSelectParams.district)
 
