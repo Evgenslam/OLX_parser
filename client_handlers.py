@@ -42,7 +42,6 @@ class FSMSelectParams(StatesGroup):
 
 router: Router = Router()
 router_district: Router = Router() # TODO: use router_district
-
 router_district.callback_query.filter(StateFilter(FSMSelectParams.district))
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
@@ -74,31 +73,53 @@ async def cancel_input(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(StateFilter(FSMSelectParams.price_from), F.data.isdigit())
-async def process_price_from(message: types.Message, state: FSMContext):  # TODO: change handlers and filters to
-    # callback
-    state_data = {'search[filter_float_price:from]': message.text}
+@router.callback_query(StateFilter(FSMSelectParams.price_from), F.data.isdigit())
+async def process_menu_price_from(callback: types.CallbackQuery, state: FSMContext):
+    min_price = int(callback.data)
+    state_data = {'search[filter_float_price:from]': min_price}
+    print(state_data)
     await state.update_data(state_data)
-    await message.answer(text=LEXICON_RU['ask_max_price'],
-                         reply_markup=price_menu_inl)
+    await callback.message.answer(text=f'Вы выбрали {int(min_price/11420)} $\n' + LEXICON_RU['ask_max_price'],
+                          reply_markup=price_menu_inl)
     await state.set_state(FSMSelectParams.price_to)
 
+
+@router.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
+async def process_message_price_from(message: types.Message, state: FSMContext):
+    min_price = int(message.text)
+    state_data = {'search[filter_float_price:from]': min_price * 11420}
+    print(state_data)
+    await state.update_data(state_data)
+    await message.answer(text=f'Вы выбрали {min_price} $\n' + LEXICON_RU['ask_max_price'],
+                         reply_markup=price_menu_inl)
+    await state.set_state(FSMSelectParams.price_to)
 # TODO: add handlers for not_price_from, not_ditrict etc
 
 
-@router.message(StateFilter(FSMSelectParams.price_to), F.data.isdigit())
-async def process_price_to(message: types.Message, state: FSMContext):
-    state_data = {'search[filter_float_price:to]': message.text}
+@router.callback_query(StateFilter(FSMSelectParams.price_to), F.data.isdigit())
+async def process_menu_price_to(callback: types.CallbackQuery, state: FSMContext):
+    max_price = int(callback.data)
+    state_data = {'search[filter_float_price:to]': max_price}
     await state.update_data(state_data)
     await state.update_data(districts=[])
-    await message.answer(text=LEXICON_RU['ask_district'],
-                         reply_markup=district_menu_inl)
-    # TODO: how to pick several districts at once?
+    await callback.message.answer(text=f'Вы выбрали {int(max_price/11420)} $\n' +LEXICON_RU['ask_district'],
+                                  reply_markup=district_menu_inl)
     await state.set_state(FSMSelectParams.district)
 
 
-@router.callback_query(StateFilter(FSMSelectParams.district), F.data != 'finish') #, ~F.text == 'выбрать'
-async def gather_district(callback: types.CallbackQuery, state: FSMContext):
+@router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+async def process_message_price_to(message: types.Message, state: FSMContext):
+    max_price = int(message.text)
+    state_data = {'search[filter_float_price:to]': max_price * 11420}
+    await state.update_data(state_data)
+    await state.update_data(districts=[])
+    await message.answer(text=f'Вы выбрали {max_price} $\n' + LEXICON_RU['ask_district'],
+                         reply_markup=district_menu_inl)
+    await state.set_state(FSMSelectParams.district)
+
+
+@router.callback_query(StateFilter(FSMSelectParams.district), F.data != 'finish')
+async def gather_district(callback: types.CallbackQuery, state: FSMContext): # TODO: remove clock icon
     data = await state.get_data()
     districts = data['districts']
     districts.append(callback.data)
