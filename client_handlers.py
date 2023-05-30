@@ -41,11 +41,20 @@ class FSMSelectParams(StatesGroup):
     stop_delivery = State()
 
 router: Router = Router()
-router_district: Router = Router() # TODO: use router_district
+router_price_from: Router = Router()
+router_price_to: Router = Router()
+router_district: Router = Router()
+
+router_price_from.callback_query.filter(StateFilter(FSMSelectParams.price_from))
+router_price_from.message.filter(StateFilter(FSMSelectParams.price_from))
+
+router_price_to.callback_query.filter(StateFilter(FSMSelectParams.price_to))
+router_price_to.message.filter(StateFilter(FSMSelectParams.price_to))
+
 router_district.callback_query.filter(StateFilter(FSMSelectParams.district))
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
-@router.message(CommandStart())  # new type of decorator , #StateFilter(default_state
+@router.message(CommandStart())  # new type of decorator
 async def command_start(message: types.Message, state: FSMContext):
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
@@ -72,18 +81,18 @@ async def cancel_input(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@router.callback_query(StateFilter(FSMSelectParams.price_from), F.data.isdigit())
+@router_price_from.callback_query(F.data.isdigit())
 async def process_menu_price_from(callback: types.CallbackQuery, state: FSMContext):
     min_price = int(callback.data)
     state_data = {'search[filter_float_price:from]': min_price}
     print(state_data)
     await state.update_data(state_data)
     await callback.message.answer(text=f'Вы выбрали {int(min_price/11420)} $\n' + LEXICON_RU['ask_max_price'],
-                          reply_markup=price_menu_inl)
+                                  reply_markup=price_menu_inl)
     await state.set_state(FSMSelectParams.price_to)
 
 
-@router.message(StateFilter(FSMSelectParams.price_from), F.text.isdigit())
+@router_price_from.message(F.text.isdigit())
 async def process_message_price_from(message: types.Message, state: FSMContext):
     min_price = int(message.text)
     state_data = {'search[filter_float_price:from]': min_price * 11420}
@@ -95,7 +104,7 @@ async def process_message_price_from(message: types.Message, state: FSMContext):
 # TODO: add handlers for not_price_from, not_ditrict etc
 
 
-@router.callback_query(StateFilter(FSMSelectParams.price_to), F.data.isdigit())
+@router_price_to.callback_query(F.data.isdigit())
 async def process_menu_price_to(callback: types.CallbackQuery, state: FSMContext):
     max_price = int(callback.data)
     state_data = {'search[filter_float_price:to]': max_price}
@@ -106,7 +115,7 @@ async def process_menu_price_to(callback: types.CallbackQuery, state: FSMContext
     await state.set_state(FSMSelectParams.district)
 
 
-@router.message(StateFilter(FSMSelectParams.price_to), F.text.isdigit())
+@router_price_to.message(F.text.isdigit())
 async def process_message_price_to(message: types.Message, state: FSMContext):
     max_price = int(message.text)
     state_data = {'search[filter_float_price:to]': max_price * 11420}
@@ -117,7 +126,7 @@ async def process_message_price_to(message: types.Message, state: FSMContext):
     await state.set_state(FSMSelectParams.district)
 
 
-@router.callback_query(StateFilter(FSMSelectParams.district), F.data != 'finish')
+@router_district.callback_query(F.data != 'finish')
 async def gather_district(callback: types.CallbackQuery, state: FSMContext): # TODO: remove clock icon
     data = await state.get_data()
     districts = data['districts']
@@ -129,7 +138,7 @@ async def gather_district(callback: types.CallbackQuery, state: FSMContext): # T
 # TODO: return common router
 
 
-@router.callback_query(StateFilter(FSMSelectParams.district), F.data == 'finish')
+@router_district.callback_query(F.data == 'finish')
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     user_dict[callback.from_user.id] = await state.get_data()
     print(user_dict)

@@ -1,7 +1,7 @@
 import asyncio
 from config import load_config
 from aiogram.fsm.storage.redis import RedisStorage, Redis
-from client_handlers import router, router_district
+from client_handlers import router, router_price_from, router_price_to, router_district
 from aiogram import Bot, Dispatcher
 
 '''
@@ -25,8 +25,14 @@ async def main():
     redis: Redis = Redis(host='localhost')
     storage: RedisStorage = RedisStorage(redis=redis)
     dp: Dispatcher = Dispatcher(storage=storage)
-    dp.include_router(router)
-    dp.include_router(router_district)
+    dp.include_routers(router,
+                       router_price_from,
+                       router_price_to,
+                       router_district)
+    # dp.include_router(router_price_from)
+    # dp.include_router(router_price_to)
+    # dp.include_router(router_district)
+    # dp.include_router()
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
