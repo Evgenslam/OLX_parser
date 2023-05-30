@@ -83,6 +83,13 @@ async def cancel_input(message: types.Message, state: FSMContext):
     await state.clear()
 
 
+@router_price_from.message(~F.text.isdigit())
+async def process_not_price_from(message: types.Message):
+    await message.answer(text=LEXICON_RU['not_num'])  # TODO: make a pop-up window
+    await message.answer(text=LEXICON_RU['ask_min_price'],
+                         reply_markup=price_menu_inl)
+
+
 @router_price_from.callback_query(F.data.isdigit())
 async def process_menu_price_from(callback: types.CallbackQuery, state: FSMContext):
     global min_price
@@ -106,6 +113,13 @@ async def process_message_price_from(message: types.Message, state: FSMContext):
                          reply_markup=price_menu_inl)
     await state.set_state(FSMSelectParams.price_to)
 # TODO: add handlers for not_price_from, not_ditrict etc
+
+
+@router_price_to.message(~F.text.isdigit())
+async def process_not_price_to(message: types.Message):
+    await message.answer(text=LEXICON_RU['not_num'])  # TODO: make a pop-up window
+    await message.answer(text=LEXICON_RU['ask_max_price'],
+                         reply_markup=price_menu_inl)
 
 
 @router_price_to.callback_query(F.data.isdigit(), lambda callback: int(callback.data) < min_price)
