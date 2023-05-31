@@ -122,6 +122,13 @@ async def process_not_price_to(message: types.Message):
                          reply_markup=price_menu_inl)
 
 
+@router_price_to.message(lambda message: int(message.text) > 5000)
+async def process_not_price_to(message: types.Message):
+    await message.answer(text=LEXICON_RU['too_rich'])  # TODO: make a pop-up window
+    await message.answer(text=LEXICON_RU['ask_max_price'],
+                         reply_markup=price_menu_inl)
+
+
 @router_price_to.callback_query(F.data.isdigit(), lambda callback: int(callback.data) < min_price)
 async def process_smaller_than_min_price(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=LEXICON_RU['less_than_min_price']) # TODO: make a pop-up window
@@ -149,6 +156,13 @@ async def process_message_price_to(message: types.Message, state: FSMContext):
     await message.answer(text=f'Вы выбрали {max_price} $\n' + LEXICON_RU['ask_district'],
                          reply_markup=district_menu_inl)
     await state.set_state(FSMSelectParams.district)
+
+
+@router_district.message()
+async def process_district_message_entry(message: types.Message):
+    await message.answer(text=LEXICON_RU['not_menu'])
+    await message.answer(text=LEXICON_RU['ask_district'],
+                         reply_markup=district_menu_inl)
 
 
 @router_district.callback_query(F.data != 'finish')
