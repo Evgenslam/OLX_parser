@@ -16,8 +16,7 @@ class Database:
             # cursor.execute(f'SELECT user_id FROM offers WHERE user_id={user_id}')
             cursor.execute(f'SELECT EXISTS(SELECT user_id FROM offers WHERE user_id={user_id})')
             result = cursor.fetchone()
-            print(result)
-            return result == 0
+            return result != (0,)
 
     def ad_is_in_db(self, card: str):
         with sqlite3.connect(self.db_path) as conn:
@@ -30,8 +29,7 @@ class Database:
                     SELECT count(*) FROM offers WHERE title = (?)
                 ''', (title,))
             result = cursor.fetchone()
-            print(result)
-            return result == 0
+            return result != (0,)
 
     def send_to_db(self, offer: dict):
         with sqlite3.connect(self.db_path) as conn:

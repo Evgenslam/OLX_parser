@@ -15,7 +15,6 @@ from loader import db
 from module import get_cards, get_offer, format_text, convert_params
 from typing import List
 from lexicon_ru import LEXICON_RU
-from filters import SmallerThan
 from pprint import pprint
 
 url = 'https://www.olx.uz/d/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/'
@@ -66,8 +65,9 @@ async def command_start(message: types.Message, state: FSMContext):
     if db.user_is_in_db(user_tg_id):
         search_params = eval(*db.fetch('search_params', user_tg_id))
         ru_params = convert_params(search_params)
-        await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: \n\n{ru_params}\n\n Посмотреть параметры '
-                             'запроса можно также в меню.',
+        await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: '
+                             f'\n\n{ru_params}\n\n '
+                             f'Посмотреть параметры запроса можно также в меню.',
                              reply_markup=resume_alter_menu_inl)
         await state.set_state(FSMSelectParams.resume_delivery)
 
@@ -86,6 +86,13 @@ async def cancel_input(message: types.Message, state: FSMContext):
 @router_price_from.message(~F.text.isdigit())
 async def process_not_price_from(message: types.Message):
     await message.answer(text=LEXICON_RU['not_num'])  # TODO: make a pop-up window
+    await message.answer(text=LEXICON_RU['ask_min_price'],
+                         reply_markup=price_menu_inl)
+
+
+@router_price_from.message(lambda message: int(message.text) > 5000)
+async def process_price_from_too_high(message: types.Message):
+    await message.answer(text=LEXICON_RU['too_rich'])  # TODO: make a pop-up window
     await message.answer(text=LEXICON_RU['ask_min_price'],
                          reply_markup=price_menu_inl)
 
@@ -112,19 +119,11 @@ async def process_message_price_from(message: types.Message, state: FSMContext):
     await message.answer(text=f'Вы выбрали {min_price} $\n' + LEXICON_RU['ask_max_price'],
                          reply_markup=price_menu_inl)
     await state.set_state(FSMSelectParams.price_to)
-# TODO: add handlers for not_price_from, not_ditrict etc
 
 
 @router_price_to.message(~F.text.isdigit())
 async def process_not_price_to(message: types.Message):
     await message.answer(text=LEXICON_RU['not_num'])  # TODO: make a pop-up window
-    await message.answer(text=LEXICON_RU['ask_max_price'],
-                         reply_markup=price_menu_inl)
-
-
-@router_price_to.message(lambda message: int(message.text) > 5000)
-async def process_not_price_to(message: types.Message):
-    await message.answer(text=LEXICON_RU['too_rich'])  # TODO: make a pop-up window
     await message.answer(text=LEXICON_RU['ask_max_price'],
                          reply_markup=price_menu_inl)
 
@@ -190,11 +189,9 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
     print('Поехали парсить')
     user_id = callback.from_user.id
-    print(callback.message.chat.id)
     user_query = user_dict[user_id]
     search_params = copy.deepcopy(user_query)
     search_districts = [LEXICON_RU[x] for x in user_query.pop('districts')]
-    print(search_districts)
     payload = payload_boilerplate | user_query
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
     print(search_link)
@@ -215,24 +212,28 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
                     # TODO: add sent or not field, add field with generated link
         await asyncio.sleep(randint(30, 40))
 
-# @router.message()
+
+@router.callback_query(lambda callback: db.user_is_in_db(callback.from_user.id), Text(text='resume'))
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     print('Возобновляем рассылку.')
     await callback.message.answer(text=LEXICON_RU['/resume'])
-    user_id = callback.message['chat']['id']
+    user_id = callback.from_user.id
     search_link = db.fetch('search_link', user_id)[0]
+    print(search_link)
 
     while await state.get_state() == 'FSMSelectParams:resume_delivery':
+        print('возобновляем парсинг')
         cards: List[str] = get_cards(url=search_link)
         for card in cards:
             if not db.ad_is_in_db(card):
                 search_params = eval(*db.fetch('search_params', user_id))
-                search_districts = search_params['districts']
+                print(f'Параметры поиска: {search_params}')
+                search_districts = [LEXICON_RU[x] for x in search_params['districts']]
                 offer = get_offer(card, search_districts)
                 if offer:
                     offer['user_id'] = user_id
                     offer['search_link'] = search_link
-                    offer['параметры_поиска'] = str(search_params)  # TODO: translate into Russian
+                    offer['параметры_поиска'] = str(search_params)
                     text = format_text(offer)
                     db.send_to_db(offer)
                     tg.send_telegram(text)

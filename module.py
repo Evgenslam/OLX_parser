@@ -48,6 +48,8 @@ def get_offer(card: str, search_districts: List[str]) -> Dict[str, str]:
     offer: dict = {}
     loctime = card.find('p', {'data-testid': 'location-date'}).text
     district = loctime.split(' - ')[0].split(',')[1][:-6].lstrip()    # TODO: ugly as fuck, rewrite plz
+    print(f'Ищем по районам: {search_districts}')
+    print(f'Район в этой карточке: {district}')
     current_date = str(datetime.now().date())
     if not search_districts or district in search_districts:
         offer["название"] = card.find('h6').text
@@ -72,14 +74,17 @@ def format_text(offer: Dict[str, str]) -> str:
 
 
 def convert_params(params: dict) -> str:
+    print(params)
     trans_dict = {
         'минимальная цена': 'search[filter_float_price:from]',
         'максимальная цена': 'search[filter_float_price:to]',
         'районы': 'districts'
     } # TODO: move the trans_dict into a separate LEXICON file
-    ru_params = {ru_param: params.get(trans_dict[ru_param]) for ru_param in trans_dict}
+    ru_params = {ru_param: params.get(trans_dict[ru_param])for ru_param in trans_dict}
     ru_params['районы'] = ', '.join([LEXICON_RU[district] for district in ru_params['районы']])
-    ru_params_dict = [f'{key} : {val}' for key, val in ru_params.items()]
+    ru_params_dict = [f'{key} : {int(val/11420)} $' if type(val) == int
+                      else f'{key} : {val}'
+                      for key, val in ru_params.items()]
     ru_params_str = '\n'.join(ru_params_dict)
     return ru_params_str
 
