@@ -10,25 +10,8 @@ This version utilizes aiogram.
 In the current version  of the script the parameters are obtained via Telegram chat from the user to generate a 
 url for further parsing and sending the info back to the user. More parameters are to be added.
 '''
-async def set_main_menu(bot):
-    main_menu_commands = [
-        BotCommand(command='/start',
-                   description='О боте'),
 
-        BotCommand(command='/fill',
-                   description='Заполнить параметры поиска'),
-        BotCommand(command='/alter',
-                   description='Изменить параметры поиска'),
-        BotCommand(command='/alter',
-                   description='Изменить параметры поиска'),
-        BotCommand(command='/alter',
-                   description='Изменить параметры поиска'),
-        BotCommand(command='/alter',
-                   description='Изменить параметры поиска'),
-        BotCommand(command='/show',
-                   description='Параметры поиска сейчас'),
-    ]
-        await bot.set_my_commands(main_menu_commands)
+
 
 async def main():
     print('Бот недвига вышел в онлайн')
@@ -38,20 +21,34 @@ async def main():
     redis: Redis = Redis(host='localhost')
     storage: RedisStorage = RedisStorage(redis=redis)
     dp: Dispatcher = Dispatcher(storage=storage)
+
+    async def set_main_menu(bot):
+        main_menu_commands = [
+            BotCommand(command='/start',
+                       description='О боте'),
+            BotCommand(command='/cancel',
+                       description='Остановить рассылку'),
+            BotCommand(command='/resume',
+                       description='Возобновить рассылку'),
+            BotCommand(command='/alter',
+                       description='Изменить параметры поиска'),
+            BotCommand(command='/show',
+                       description='Параметры поиска сейчас'), ]
+        await bot.set_my_commands(main_menu_commands)
+
+    dp.startup.register(set_main_menu)
     dp.include_routers(router,
                        router_price_from,
                        router_price_to,
                        router_district)
-    # dp.include_router(router_price_from)
-    # dp.include_router(router_price_to)
-    # dp.include_router(router_district)
-    # dp.include_router()
+
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
+
     asyncio.run(main())
 
 
