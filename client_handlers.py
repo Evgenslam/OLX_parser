@@ -58,6 +58,12 @@ router_district.message.filter(StateFilter(FSMSelectParams.district))
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
 @router.message(CommandStart())  # new type of decorator
 async def command_start(message: types.Message, state: FSMContext):
+    await message.answer(text=LEXICON_RU['summary'])
+    await message.answer(text=LEXICON_RU['/fill'])
+
+
+@router.message(Command(commands=["fill"]))  # new type of decorator
+async def start_fill(message: types.Message, state: FSMContext):
     '''
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
