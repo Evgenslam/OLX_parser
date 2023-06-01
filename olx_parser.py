@@ -12,8 +12,7 @@ url for further parsing and sending the info back to the user. More parameters a
 '''
 
 
-
-async def main():
+async def main(): # TODO: check func in func
     print('Бот недвига вышел в онлайн')
 
     config = load_config(None)
@@ -48,7 +47,6 @@ async def main():
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
 
 

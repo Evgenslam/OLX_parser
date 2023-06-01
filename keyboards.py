@@ -8,6 +8,7 @@ def create_inline_kb(row_width: int, **kwargs: str) -> InlineKeyboardMarkup:
     kb_builder.row(*buttons, width=row_width)
     return kb_builder.as_markup()
 
+# TODO: move main menu func here
 
 districts =['Мирзо-Улугбекский', 'Сергелийский', 'Яшнабадский', 'Чиланзарский', 'Мирабадский', 'Юнусабадский',
               'Алмазарский', 'Яккасарайский', 'Шайхантахурский']
@@ -43,8 +44,7 @@ district_ids_dict = dict(zip(districts, district_ids))
 
 price_dict = {str(x*11420): f'{x} $' for x in range(100, 1100, 100)}
 yes_no_dict = {'yes': 'да', 'no': 'нет'}
-resume_alter_dict = {'resume': 'Возобновить рассылку', 'alter': 'Изменить параметры', 'show': 'Показать актуальные '
-                                                                                              'параметры'}
+resume_alter_dict = {'resume': 'Возобновить рассылку', 'alter': 'Изменить параметры'}
 
 
 price_menu_inl = create_inline_kb(3, **price_dict)

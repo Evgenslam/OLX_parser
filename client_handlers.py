@@ -86,11 +86,36 @@ async def start_fill(message: types.Message, state: FSMContext):
         await state.set_state(FSMSelectParams.price_from)
 
 
+@router.message(Command(commands=["alter"]))
+async def alter_params_message(message: types.Message, state: FSMContext):
+    await message.answer(LEXICON_RU['ask_min_price'],
+                         reply_markup=price_menu_inl)
+    await state.set_state(FSMSelectParams.price_from)
+
+
 @router.callback_query(F.data == 'alter')
 async def alter_params(callback: types.CallbackQuery, state: FSMContext):
-        await callback.message.answer(LEXICON_RU['ask_min_price'],
-                             reply_markup=price_menu_inl)
-        await state.set_state(FSMSelectParams.price_from)
+    await callback.message.answer(LEXICON_RU['ask_min_price'],
+                                  reply_markup=price_menu_inl)
+    await state.set_state(FSMSelectParams.price_from)
+
+
+@router.message(Command(commands=["show"]))
+async def show_params_message(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    print(user_id)
+    print(type(user_id))
+    try:
+        search_params = eval(*db.fetch('search_params', user_id))
+        ru_params = convert_params(search_params)
+        await message.answer(f'Ваши актуальные параметры поиска: '
+                             f'\n\n{ru_params}\n\n '
+                             f'Посмотреть параметры запроса можно также в меню.',
+                             reply_markup=resume_alter_menu_inl)
+        await state.set_state(FSMSelectParams.resume_delivery)
+    except:
+        await message.answer(text='Вы ещё не заполняли параметры')
+
 
 @router.callback_query(F.data == 'show')
 async def show_params(callback: types.CallbackQuery, state: FSMContext):
@@ -246,6 +271,34 @@ async def parse_data(callback: types.CallbackQuery, state: FSMContext):
         await asyncio.sleep(randint(30, 40))
 
 
+@router.message(lambda message: db.user_is_in_db(message.from_user.id), Command(commands=["resume"]))
+async def resume_delivery_message(message: types.Message, state: FSMContext):
+    print('Возобновляем рассылку.')
+    await message.answer(text=LEXICON_RU['/resume'])
+    user_id = message.from_user.id
+    search_link = db.fetch('search_link', user_id)[0]
+    print(search_link)
+
+    while await state.get_state() == 'FSMSelectParams:resume_delivery':
+        print('возобновляем парсинг')
+        cards: List[str] = get_cards(url=search_link)
+        for card in cards:
+            if not db.ad_is_in_db(card):
+                search_params = eval(*db.fetch('search_params', user_id))
+                print(f'Параметры поиска: {search_params}')
+                search_districts = [LEXICON_RU[x] for x in search_params['districts']]
+                offer = get_offer(card, search_districts)
+                if offer:
+                    offer['user_id'] = user_id
+                    offer['search_link'] = search_link
+                    offer['параметры_поиска'] = str(search_params)
+                    text = format_text(offer)
+                    db.send_to_db(offer)
+                    tg.send_telegram(text)
+
+        await asyncio.sleep(randint(30, 40))
+
+
 @router.callback_query(lambda callback: db.user_is_in_db(callback.from_user.id), Text(text='resume'))
 async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
     print('Возобновляем рассылку.')
@@ -274,11 +327,6 @@ async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
         await asyncio.sleep(randint(30, 40))
 
 
-async def check_params(message: types.Message, state: FSMContext):
-    await message.answer('Вот ваши параметры!')
-    search_params = eval(*db.fetch('search_params', message['from']['id']))
-    ru_params = convert_params(search_params)
-    await message.answer(ru_params)
 
 # TODO: add show_params
 # TODO: add I don't get ya
