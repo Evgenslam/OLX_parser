@@ -53,6 +53,7 @@ router_price_to.callback_query.filter(StateFilter(FSMSelectParams.price_to))
 router_price_to.message.filter(StateFilter(FSMSelectParams.price_to))
 
 router_district.callback_query.filter(StateFilter(FSMSelectParams.district))
+router_district.message.filter(StateFilter(FSMSelectParams.district))
 
 # @dp.message_handler(commands=['start'], state='*') # old type of decorator
 @router.message(CommandStart())  # new type of decorator
@@ -61,9 +62,12 @@ async def command_start(message: types.Message, state: FSMContext):
     Launch the bot. By user_id check if the user is new or not. If new, propose to pick params starting price_to. Switch
     FMS to price_to.
     '''
-    user_tg_id = message.from_user.id
-    if db.user_is_in_db(user_tg_id):
-        search_params = eval(*db.fetch('search_params', user_tg_id))
+    user_id = message.from_user.id
+    print(user_id)
+    print(type(user_id))
+    if db.user_is_in_db(user_id):
+        print('User is in DB.')
+        search_params = eval(*db.fetch('search_params', user_id))
         ru_params = convert_params(search_params)
         await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: '
                              f'\n\n{ru_params}\n\n '
@@ -237,7 +241,6 @@ async def resume_delivery(callback: types.CallbackQuery, state: FSMContext):
                     text = format_text(offer)
                     db.send_to_db(offer)
                     tg.send_telegram(text)
-                    # TODO: add sent or not field, add field with generated link
 
         await asyncio.sleep(randint(30, 40))
 

@@ -44,12 +44,15 @@ class Database:
             print(f'Время добавления в базу данных: {time.ctime(time.time())}')
             print(f'Время с начала запуска скрипта: {time.time() - start_time}')
 
-    def fetch(self, column: str, user_id: str):
+    def fetch(self, column: str, user_id: int):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute(f'''SELECT {column} FROM offers WHERE (ad_id = (SELECT MAX(ad_id) FROM offers) and
-            user_id = (?))''', (user_id,))
-            return cursor.fetchone()
+            # cursor.execute(f'''SELECT {column} FROM offers WHERE (ad_id = (SELECT MAX(ad_id) FROM offers) and
+            # user_id = (?))''', (user_id,))
+            cursor.execute(f'''SELECT {column} FROM offers WHERE (ad_id = (SELECT MAX(ad_id) FROM offers 
+            WHERE user_id = (?)))''', (user_id,))
+            res = cursor.fetchone()
+            return res
 
     def del_db_content(self):
         with sqlite3.connect(self.db_path) as conn:
