@@ -43,7 +43,9 @@ district_ids_dict = dict(zip(districts, district_ids))
 
 price_dict = {str(x*11420): f'{x} $' for x in range(100, 1100, 100)}
 yes_no_dict = {'yes': 'да', 'no': 'нет'}
-resume_alter_dict = {'resume': 'Возобновить рассылку по этим параметрам', 'alter': 'Изменить параметры'}
+resume_alter_dict = {'resume': 'Возобновить рассылку', 'alter': 'Изменить параметры', 'show': 'Показать актуальные '
+                                                                                              'параметры'}
+
 
 price_menu_inl = create_inline_kb(3, **price_dict)
 district_menu_inl = create_inline_kb(2, **districts_dict)

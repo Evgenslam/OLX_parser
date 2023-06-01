@@ -72,10 +72,9 @@ async def start_fill(message: types.Message, state: FSMContext):
     print(user_id)
     print(type(user_id))
     if db.user_is_in_db(user_id):
-        print('User is in DB.')
         search_params = eval(*db.fetch('search_params', user_id))
         ru_params = convert_params(search_params)
-        await message.answer(f'Я тебя знаю, приятель! Твой последний запрос: '
+        await message.answer(f'Ваши актуальные параметры поиска: '
                              f'\n\n{ru_params}\n\n '
                              f'Посмотреть параметры запроса можно также в меню.',
                              reply_markup=resume_alter_menu_inl)
@@ -87,9 +86,33 @@ async def start_fill(message: types.Message, state: FSMContext):
         await state.set_state(FSMSelectParams.price_from)
 
 
+@router.callback_query(F.data == 'alter')
+async def alter_params(callback: types.CallbackQuery, state: FSMContext):
+        await callback.message.answer(LEXICON_RU['ask_min_price'],
+                             reply_markup=price_menu_inl)
+        await state.set_state(FSMSelectParams.price_from)
+
+@router.callback_query(F.data == 'show')
+async def show_params(callback: types.CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    print(user_id)
+    print(type(user_id))
+    try:
+        search_params = eval(*db.fetch('search_params', user_id))
+        ru_params = convert_params(search_params)
+        await callback.message.answer(f'Ваши актуальные параметры поиска: '
+                             f'\n\n{ru_params}\n\n '
+                             f'Посмотреть параметры запроса можно также в меню.',
+                             reply_markup=resume_alter_menu_inl)
+        await state.set_state(FSMSelectParams.resume_delivery)
+    except:
+        await callback.message.answer(text='Вы ещё не заполняли параметры')
+
+
 @router.message(Command(commands=["cancel"]), ~StateFilter(default_state))
 async def cancel_input(message: types.Message, state: FSMContext):
-    await message.answer(LEXICON_RU['/cancel'])
+    await message.answer(LEXICON_RU['/cancel'],
+                         reply_markup=resume_alter_menu_inl)
     await state.clear()
 
 
