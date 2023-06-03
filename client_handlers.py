@@ -69,8 +69,6 @@ async def start_fill(message: types.Message, state: FSMContext):
     FMS to price_to.
     '''
     user_id = message.from_user.id
-    print(user_id)
-    print(type(user_id))
     if db.user_is_in_db(user_id):
         search_params = eval(*db.fetch('search_params', user_id))
         ru_params = convert_params(search_params)
@@ -103,8 +101,6 @@ async def alter_params(callback: types.CallbackQuery, state: FSMContext):
 @router.message(Command(commands=["show"]))
 async def show_params_message(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
-    print(user_id)
-    print(type(user_id))
     try:
         search_params = eval(*db.fetch('search_params', user_id))
         ru_params = convert_params(search_params)
@@ -120,8 +116,6 @@ async def show_params_message(message: types.Message, state: FSMContext):
 @router.callback_query(F.data == 'show')
 async def show_params(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
-    print(user_id)
-    print(type(user_id))
     try:
         search_params = eval(*db.fetch('search_params', user_id))
         ru_params = convert_params(search_params)
@@ -160,7 +154,6 @@ async def process_menu_price_from(callback: types.CallbackQuery, state: FSMConte
     global min_price
     min_price = int(callback.data)
     state_data = {'search[filter_float_price:from]': min_price}
-    print(state_data)
     await state.update_data(state_data)
     await callback.message.answer(text=f'Вы выбрали {int(min_price/11420)} $\n' + LEXICON_RU['ask_max_price'],
                                   reply_markup=price_menu_inl)
@@ -172,7 +165,6 @@ async def process_message_price_from(message: types.Message, state: FSMContext):
     global min_price
     min_price = int(message.text)
     state_data = {'search[filter_float_price:from]': min_price * 11420}
-    print(state_data)
     await state.update_data(state_data)
     await message.answer(text=f'Вы выбрали {min_price} $\n' + LEXICON_RU['ask_max_price'],
                          reply_markup=price_menu_inl)
@@ -237,7 +229,6 @@ async def gather_district(callback: types.CallbackQuery, state: FSMContext): # T
 @router_district.callback_query(F.data == 'finish')
 async def process_district(callback: types.CallbackQuery, state: FSMContext):
     user_dict[callback.from_user.id] = await state.get_data()
-    print(user_dict)
     await callback.message.edit_text(text=LEXICON_RU['ask_to_start_parsing'],
                                      reply_markup=yes_no_menu_inl)
     await state.set_state(FSMSelectParams.start_parsing)
@@ -245,17 +236,14 @@ async def process_district(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(StateFilter(FSMSelectParams.start_parsing), Text(text='yes'))
 async def parse_data(callback: types.CallbackQuery, state: FSMContext):
-    print('Поехали парсить')
     user_id = callback.from_user.id
     user_query = user_dict[user_id]
     search_params = copy.deepcopy(user_query)
     search_districts = [LEXICON_RU[x] for x in user_query.pop('districts')]
     payload = payload_boilerplate | user_query
     search_link = requests.get(url=url, params=payload).url  # TODO: use urllib to avoid making an extra request
-    print(search_link)
 
     while await state.get_state() == 'FSMSelectParams:start_parsing':
-        print('парсинг начался')
         cards: List[str] = get_cards(url=search_link)  # TODO: pass search_link from the above to avoid double job
         for card in cards:
             if not db.ad_is_in_db(card):

@@ -74,7 +74,6 @@ def format_text(offer: Dict[str, str]) -> str:
 
 
 def convert_params(params: dict) -> str:
-    print(params)
     trans_dict = {
         'минимальная цена': 'search[filter_float_price:from]',
         'максимальная цена': 'search[filter_float_price:to]',
