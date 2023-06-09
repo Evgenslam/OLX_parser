@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  olxparser:
+    build: .
+  redis:
+    image: redis
+    network_mode: host
