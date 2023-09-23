@@ -1,15 +1,12 @@
 # OLX_parser
 ## Описание
-Это парсер, чтобы приходили оповещения в телегу при появлении новых квартир по заданным параметрам на сайте недвиги. 
-Скрипт заходит на сайт каждые 2-3 минуты (время рандомизировано). 
-Бьютифул суп (json не нашёл). 
-Headers задал своего родного браузера. Пробовал fake-useragent и pyuser, но с ними почему-то не работает. 
-Раньше было 3 прокси, из которых рандомно выбирал при каждом новом запросе, чтобы избежать блокировки. Сейчас захожу 
-с родного IP.
+This is a parser designed to send notifications to Telegram when new apartments matching specified criteria appear on the real estate website olx.uz. The subscriber takes a survey first to get notifications about all apartments that match his or her criteria.
 
-##Вопросы
--Какие мысли по поводу логики кода?
--Нужно ли делать аннотацию типов абсолютно для всех переменных и при повторном вхождении переменной?
--Блок try except работает не так, как я ожидал. Думал, он выведет надпись и продолжит работу,а скрипт всё равно падает с ошибкой.
--Что не так с фейк-юзерагентом?
+The app was born out of my own pain trying to find a reasonable accomodation in Tashkent(Uzbekistan).
+
+The script visits the website every 2-3 minutes (with randomized timing). It uses BeautifulSoup for parsing.
+
+The script sets headers to mimic a standard web browser. Previous version used "fake-useragent" and "pyuser," which turned out to be excessive. The script uses three proxies, randomly selecting one for each new request to avoid being blocked. Can also be set to access the website with your own IP address.
+
+
 
